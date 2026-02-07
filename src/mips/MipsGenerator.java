@@ -84,9 +84,9 @@ public class MipsGenerator
 		fileWriter.format(".data\n");
 		fileWriter.format("\tglobal_%s: .word 721\n",varName);
 	}
-	public void load(String idxdst, String varName)
-	{
-		fileWriter.format("\tlw %s,global_%s\n",idxdst,varName);
+	// Inside MipsGenerator.java
+	public void load(String dstReg, String srcReg, int offset) {
+    	fileWriter.format("\tlw %s, %d(%s)\n", dstReg, offset, srcReg);
 	}
 	public void store(String varName, String idxsrc)
 	{
@@ -118,6 +118,10 @@ public class MipsGenerator
 
 		fileWriter.format("%s:\n", done);
 	}
+	public void add(String command) {
+    // Simply print the string with a tab for formatting
+    fileWriter.format("\t%s\n", command);
+}
 
 	public void sub(String dstidx, String i1, String i2){
 
