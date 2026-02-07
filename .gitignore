@@ -1,0 +1,17 @@
+# Java class files
+*.class
+
+# Generated Parser/Lexer files (if they are in your src)
+# Adjust these names if your CUP/JFlex outputs are different
+TokenNames.java
+Parser.java
+Lexer.java
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE folders
+.idea/
+.vscode/
+bin/
