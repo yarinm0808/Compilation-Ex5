@@ -2,6 +2,7 @@ package ast;
 
 import temp.*;
 import ir.*;
+import types.*;
 
 public class AstStmtWhile extends AstStmt
 {
@@ -15,6 +16,16 @@ public class AstStmtWhile extends AstStmt
 	{
 		this.cond = cond;
 		this.body = body;
+	}
+
+	@Override
+	public Type semantMe(){
+		Type t = cond.semantMe();
+        if (!(t instanceof TypeInt)) {
+            throw new RuntimeException("ERROR(" + lineNumber + ")");
+        }
+        if (body != null) body.semantMe();
+		return null;
 	}
 
 	public Temp irMe()
@@ -54,7 +65,7 @@ public class AstStmtWhile extends AstStmt
 		/******************************/
 		Ir.
 				getInstance().
-				AddIrCommand(new IrCommandJumpLabel(labelStart));
+				AddIrCommand(new IrCommandJump(labelStart));
 
 		/**********************/
 		/* [7] Loop end label */

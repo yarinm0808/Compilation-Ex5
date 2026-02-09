@@ -97,6 +97,38 @@ public class MipsGenerator
 		fileWriter.format("\tli %s,%d\n",idx,value);
 	}
 
+	public void ReturnValue(String retval){
+		fileWriter.format("\tmove $v0, %s\n", retval);
+	}
+	public void JumpReturn(){
+		fileWriter.format("\tjr $ra\n");
+	}
+
+	public void push(String ToPush){
+		fileWriter.format("\taddi $sp, $sp, -4\n");
+		fileWriter.format("\tsw %s, 0($sp)\n", ToPush);
+	}
+
+	public void func_call(String FuncName){
+		fileWriter.format("\tjal %s\n", FuncName);
+	}
+
+	public void StackPointerUpdate(int bytes){
+		fileWriter.format("\taddu $sp, $sp, %d\n", bytes);
+	}
+
+	public void GetRetVal(String targetReg){
+		fileWriter.format("\tmove %s, $v0\n", targetReg);
+	}
+	public void epilogue() {
+    	fileWriter.format("\tlw $ra, 0($sp)\n");
+    	fileWriter.format("\taddi $sp, $sp, 4\n");
+	}
+	public void prologue() {
+    	fileWriter.format("\taddi $sp, $sp, -4\n");
+    	fileWriter.format("\tsw $ra, 0($sp)\n");
+	}
+
 	public void add(String dst, String oprnd1, String oprnd2)
 	{
 		String upperCheck = "upper_" + AstNodeSerialNumber.getFresh();

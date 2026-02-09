@@ -123,12 +123,29 @@ public class AstDecFunc extends AstDec
 		return null;		
 	}
 
-	public Temp irMe()
-	{
-		Ir.
-				getInstance().
-				AddIrCommand(new IrCommandLabel("main"));
+	public Temp irMe() {
+		String entryLabel = "func_" + name;
+		String exitLabel  = "end_" + name;
+
+		ControlFlowContext.getInstance().setCurrentFunctionEndLabel(exitLabel);
+
+		// 1. Entry Label
+		Ir.getInstance().AddIrCommand(new IrCommandLabel(entryLabel));
+
+		// 2. PROLOGUE: Save $ra so we can call other functions safely
+		Ir.getInstance().AddIrCommand(new IrCommandPrologue());
+
+		// 3. BODY
 		if (body != null) body.irMe();
+
+		// 4. EXIT LABEL (Target for return statements)
+		Ir.getInstance().AddIrCommand(new IrCommandLabel(exitLabel));
+
+		// 5. EPILOGUE: Restore $ra
+		Ir.getInstance().AddIrCommand(new IrCommandEpilogue());
+
+		// 6. JUMP BACK: jr $ra
+		Ir.getInstance().AddIrCommand(new IrCommandJumpToRa());
 
 		return null;
 	}

@@ -1,5 +1,7 @@
 package ast;
-
+import ir.*;
+import temp.Temp;
+import types.*;
 public class AstStmtReturn extends AstStmt
 {
 	/****************/
@@ -47,4 +49,24 @@ public class AstStmtReturn extends AstStmt
 		/****************************************/
 		if (exp != null) AstGraphviz.getInstance().logEdge(serialNumber,exp.serialNumber);
 	}
+
+	@Override
+	public Type semantMe(){
+		if(this.exp != null) this.exp.semantMe();
+		return null;
+	}
+
+	@Override
+	public Temp irMe() {
+		if (exp != null) {
+			Temp val = exp.irMe();
+			Ir.getInstance().AddIrCommand(new IrCommandReturnVal(val));
+		}
+		
+		String endLabel = ControlFlowContext.getInstance().getCurrentFunctionEndLabel();
+		Ir.getInstance().AddIrCommand(new IrCommandJump(endLabel));
+
+		return null;
+	}
+
 }
