@@ -21,11 +21,13 @@ public class IrCommandStore extends IrCommand
 {
 	String varName;
 	Temp src;
+	int offset;
 	
-	public IrCommandStore(String varName, Temp src)
+	public IrCommandStore(String varName, Temp src, int offset)
 	{
 		this.src      = src;
 		this.varName = varName;
+		this.offset = offset;
 	}
 	
 	/***************/
@@ -35,7 +37,7 @@ public class IrCommandStore extends IrCommand
 	public void mipsMe(java.util.Map<Temp, String> regMap)
 	{
 		String StrSrc = regMap.get(this.src);
-		MipsGenerator.getInstance().store(varName,StrSrc);
+		MipsGenerator.getInstance().store(varName,StrSrc, offset);
 	}
 
 	@Override

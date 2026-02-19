@@ -84,13 +84,21 @@ public class MipsGenerator
 		fileWriter.format(".data\n");
 		fileWriter.format("\tglobal_%s: .word 721\n",varName);
 	}
-	// Inside MipsGenerator.java
-	public void load(String dstReg, String srcReg, int offset) {
-    	fileWriter.format("\tlw %s, %d(%s)\n", dstReg, offset, srcReg);
+	public void load(String dstReg, String varName, int offset) {
+		if (varName == null) {
+			// It's a Local or a Parameter
+			fileWriter.format("\tlw %s, %d($sp)\n", dstReg, offset);
+		} else {
+			// It's a Global variable
+			fileWriter.format("\tlw %s, %s\n", dstReg, varName);
+		}
 	}
-	public void store(String varName, String idxsrc)
-	{
-		fileWriter.format("\tsw %s,global_%s\n",idxsrc,varName);
+	public void store(String srcReg, String varName, int offset) {
+		if (varName == null) {
+			fileWriter.format("\tsw %s, %d($sp)\n", srcReg, offset);
+		} else {
+			fileWriter.format("\tsw %s, %s\n", srcReg, varName);
+		}
 	}
 	public void li(String idx, int value)
 	{
@@ -120,13 +128,31 @@ public class MipsGenerator
 	public void GetRetVal(String targetReg){
 		fileWriter.format("\tmove %s, $v0\n", targetReg);
 	}
-	public void epilogue() {
-    	fileWriter.format("\tlw $ra, 0($sp)\n");
-    	fileWriter.format("\taddi $sp, $sp, 4\n");
-	}
+
 	public void prologue() {
-    	fileWriter.format("\taddi $sp, $sp, -4\n");
-    	fileWriter.format("\tsw $ra, 0($sp)\n");
+		// 1. Move stack pointer down by 44 bytes
+		fileWriter.format("\taddi $sp, $sp, -44\n");
+		
+		// 2. Save the Return Address
+		fileWriter.format("\tsw $ra, 40($sp)\n");
+		
+		// 3. Save all 10 temporary registers
+		for (int i = 0; i <= 9; i++) {
+			fileWriter.format("\tsw $t%d, %d($sp)\n", i, i * 4);
+		}
+	}
+
+	public void epilogue() {
+		// 1. Restore all 10 temporary registers
+		for (int i = 0; i <= 9; i++) {
+			fileWriter.format("\tlw $t%d, %d($sp)\n", i, i * 4);
+		}
+		
+		// 2. Restore the Return Address
+		fileWriter.format("\tlw $ra, 40($sp)\n");
+		
+		// 3. Move stack pointer back up
+		fileWriter.format("\taddi $sp, $sp, 44\n");
 	}
 
 	public void add(String dst, String oprnd1, String oprnd2)

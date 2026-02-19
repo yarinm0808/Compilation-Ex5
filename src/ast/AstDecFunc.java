@@ -129,25 +129,25 @@ public class AstDecFunc extends AstDec
 
 		ControlFlowContext.getInstance().setCurrentFunctionEndLabel(exitLabel);
 
-		// 1. Entry Label
-		Ir.getInstance().AddIrCommand(new IrCommandLabel(entryLabel));
+	Ir.getInstance().AddIrCommand(new IrCommandLabel(entryLabel));
+    Ir.getInstance().AddIrCommand(new IrCommandPrologue());
 
-		// 2. PROLOGUE: Save $ra so we can call other functions safely
-		Ir.getInstance().AddIrCommand(new IrCommandPrologue());
+    // Assigning offsets to params:
+    // The first parameter is now at 44($sp) because we pushed 11 regs (44 bytes)
+    int currentOffset = 44; 
+    for (AstTypeNameList it = params; it != null; it = it.tail) {
+        // Mark that this specific variable lives at 'currentOffset'
+        it.head.entry.setOffset(currentOffset);
+        currentOffset += 4;
+    }
 
-		// 3. BODY
-		if (body != null) body.irMe();
+    if (body != null) body.irMe();
 
-		// 4. EXIT LABEL (Target for return statements)
-		Ir.getInstance().AddIrCommand(new IrCommandLabel(exitLabel));
+    Ir.getInstance().AddIrCommand(new IrCommandLabel(exitLabel));
+    Ir.getInstance().AddIrCommand(new IrCommandEpilogue());
+    Ir.getInstance().AddIrCommand(new IrCommandJumpToRa());
 
-		// 5. EPILOGUE: Restore $ra
-		Ir.getInstance().AddIrCommand(new IrCommandEpilogue());
-
-		// 6. JUMP BACK: jr $ra
-		Ir.getInstance().AddIrCommand(new IrCommandJumpToRa());
-
-		return null;
+    return null;
 	}
 	
 }

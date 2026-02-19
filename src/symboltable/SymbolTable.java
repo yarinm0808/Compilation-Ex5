@@ -41,7 +41,7 @@ public class SymbolTable
     /****************************************************************************/
     /* Enter a variable, function, class type or array type to the symbol table */
     /****************************************************************************/
-    public void enter(String name, Type t)
+    public SymbolTableEntry enter(String name, Type t) // Changed from void
     {
         /*************************************************/
         /* [1] Compute the hash value for this new entry */
@@ -50,16 +50,14 @@ public class SymbolTable
 
         /******************************************************************************/
         /* [2] Extract what will eventually be the next entry in the hashed position  */
-        /* NOTE: this entry can very well be null, but the behaviour is identical */
         /******************************************************************************/
         SymbolTableEntry next = table[hashValue];
 
         /**************************************************************************/
         /* [3] Prepare a new symbol table entry with name, type, next and prevtop */
         /**************************************************************************/
-        // Use topIndex++ for the unique ID so y in main is 8 and global y is 0
-        
         SymbolTableEntry e = new SymbolTableEntry(name, t, hashValue, next, top, topIndex++, 0);
+        
         /**********************************************/
         /* [4] Update the top of the symbol table ... */
         /**********************************************/
@@ -70,10 +68,10 @@ public class SymbolTable
         /****************************************/
         table[hashValue] = e;
 
-        /**************************/
-        /* [6] Print Symbol Table */
-        /**************************/
-        // printMe();
+        /****************************************************************/
+        /* [6] RETURN the entry so AST nodes can store it for IR phase */
+        /****************************************************************/
+        return e; 
     }
     public Type findInCurrentScope(String name)
 	{

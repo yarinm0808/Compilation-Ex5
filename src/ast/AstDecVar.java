@@ -19,6 +19,7 @@ public class AstDecVar extends AstDec {
     public String name;
     public AstExp initialValue;
     public int index; // Captured from SymbolTable for IR/MIPS use
+    public SymbolTableEntry entry;
 
     /******************/
     /* CONSTRUCTOR(S) */
@@ -75,6 +76,7 @@ public class AstDecVar extends AstDec {
         if (entry != null) {
             this.index = entry.prevtopIndex;
         }
+        this.entry = SymbolTable.getInstance().enter(name, t);
 
         return t;
     }
@@ -84,12 +86,22 @@ public class AstDecVar extends AstDec {
     /***************************/
     @Override
     public Temp irMe() {
-        // Handle allocation (often a no-op if using stack offsets, but keep for consistency)
-        Ir.getInstance().AddIrCommand(new IrCommandAllocate(name));
+        // 1. If it's a global variable, we allocate it in .data
+        // If it's local, your stack logic (prologue) handles space
+        if (entry.offset == 0) {
+            Ir.getInstance().AddIrCommand(new IrCommandAllocate(name));
+        }
 
         if (initialValue != null) {
             Temp val = initialValue.irMe();
-            Ir.getInstance().AddIrCommand(new IrCommandStore(name, val));
+            
+            if (entry.offset != 0) {
+                // LOCAL: Use offset, name is null
+                Ir.getInstance().AddIrCommand(new IrCommandStore(null, val, entry.offset));
+            } else {
+                // GLOBAL: Use name, offset is 0
+                Ir.getInstance().AddIrCommand(new IrCommandStore(name, val, 0));
+            }
         }
         return null;
     }

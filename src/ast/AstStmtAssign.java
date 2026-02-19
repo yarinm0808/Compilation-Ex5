@@ -3,6 +3,8 @@ package ast;
 import types.*;
 import temp.*;
 import ir.*;
+import symboltable.SymbolTable;
+import symboltable.SymbolTableEntry;
 
 public class AstStmtAssign extends AstStmt
 {
@@ -64,8 +66,7 @@ public class AstStmtAssign extends AstStmt
 		AstGraphviz.getInstance().logEdge(serialNumber,exp.serialNumber);
 	}
 
-	public Type semantMe()
-	{
+	public Type semantMe(){
 		Type t1 = null;
 		Type t2 = null;
 		
@@ -79,13 +80,35 @@ public class AstStmtAssign extends AstStmt
 		return null;
 	}
 
-	public Temp irMe()
-	{
-		Temp src = exp.irMe();
-		Ir.
-				getInstance().
-				AddIrCommand(new IrCommandStore(((AstExpVarSimple) var).name,src));
+	public Temp irMe(){
+        // 1. Evaluate the expression to get the value we want to store
+        Temp src = exp.irMe();
 
-		return null;
-	}
+        // 2. We need to handle 'var'. If it's a simple variable:
+        if (var instanceof AstExpVarSimple)
+        {
+            String name = ((AstExpVarSimple) var).name;
+            
+            // Look up the metadata for this variable
+            SymbolTableEntry entry = SymbolTable.getInstance().findEntry(name);
+
+            if (entry != null && entry.offset != 0)
+            {
+                // LOCAL/PARAM: varName is null, we use the offset
+                Ir.getInstance().AddIrCommand(new IrCommandStore(null, src, entry.offset));
+            }
+            else
+            {
+                // GLOBAL: use the varName, offset is 0
+                Ir.getInstance().AddIrCommand(new IrCommandStore(name, src, 0));
+            }
+        }
+        else
+        {
+            // Handle array access or field access here later if needed
+            // For now, simple variables are fixed!
+        }
+
+        return null;
+    }
 }

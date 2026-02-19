@@ -10,7 +10,7 @@ import temp.Temp;
 public class IrCommandEpilogue extends IrCommand{
     @Override
     public void mipsMe(Map<Temp, String> regMap) {
-        MipsGenerator.getInstance().epilogue();;
+        MipsGenerator.getInstance().epilogue();
     }
     @Override
 	public List<Temp> GetUsedTemps() {
