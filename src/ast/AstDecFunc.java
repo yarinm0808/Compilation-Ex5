@@ -98,7 +98,7 @@ public class AstDecFunc extends AstDec
 			else
 			{
 				type_list = new TypeList(t,type_list);
-				SymbolTable.getInstance().enter(it.head.name,t);
+				it.head.entry = SymbolTable.getInstance().enter(it.head.name, t);
 			}
 		}
 
@@ -124,30 +124,30 @@ public class AstDecFunc extends AstDec
 	}
 
 	public Temp irMe() {
-		String entryLabel = "func_" + name;
-		String exitLabel  = "end_" + name;
+        String entryLabel = "func_" + name;
+        String exitLabel  = "end_" + name;
 
-		ControlFlowContext.getInstance().setCurrentFunctionEndLabel(exitLabel);
+        ControlFlowContext.getInstance().setCurrentFunctionEndLabel(exitLabel);
 
-	Ir.getInstance().AddIrCommand(new IrCommandLabel(entryLabel));
-    Ir.getInstance().AddIrCommand(new IrCommandPrologue());
+        Ir.getInstance().AddIrCommand(new IrCommandLabel(entryLabel));
+        Ir.getInstance().AddIrCommand(new IrCommandPrologue());
 
-    // Assigning offsets to params:
-    // The first parameter is now at 44($sp) because we pushed 11 regs (44 bytes)
-    int currentOffset = 44; 
-    for (AstTypeNameList it = params; it != null; it = it.tail) {
-        // Mark that this specific variable lives at 'currentOffset'
-        it.head.entry.setOffset(currentOffset);
-        currentOffset += 4;
+        // Assigning offsets to params:
+        int currentOffset = 44; 
+        for (AstTypeNameList it = params; it != null; it = it.tail) {
+            // it.head.entry was set in semantMe
+            if (it.head.entry != null) {
+                it.head.entry.setOffset(currentOffset);
+            }
+            currentOffset += 4;
+        }
+
+        if (body != null) body.irMe();
+
+        Ir.getInstance().AddIrCommand(new IrCommandLabel(exitLabel));
+        Ir.getInstance().AddIrCommand(new IrCommandEpilogue());
+        Ir.getInstance().AddIrCommand(new IrCommandJumpToRa());
+
+        return null;
     }
-
-    if (body != null) body.irMe();
-
-    Ir.getInstance().AddIrCommand(new IrCommandLabel(exitLabel));
-    Ir.getInstance().AddIrCommand(new IrCommandEpilogue());
-    Ir.getInstance().AddIrCommand(new IrCommandJumpToRa());
-
-    return null;
-	}
-	
 }

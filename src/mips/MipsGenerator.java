@@ -105,12 +105,17 @@ public class MipsGenerator
 		fileWriter.format("\tli %s,%d\n",idx,value);
 	}
 
-	public void ReturnValue(String retval){
+	public void ReturnValue(String retval, String exitLabel) {
 		fileWriter.format("\tmove $v0, %s\n", retval);
+		fileWriter.format("\tj %s\n", exitLabel); 
 	}
 	public void JumpReturn(){
 		fileWriter.format("\tjr $ra\n");
 	}
+
+	public void Move(String DstReg, String target){
+        fileWriter.format("\tmove %s, %s\n", DstReg, target);
+    }
 
 	public void push(String ToPush){
 		fileWriter.format("\taddi $sp, $sp, -4\n");

@@ -54,28 +54,21 @@ public class AstDecVar extends AstDec {
     /*********************************/
     @Override
     public Type semantMe() {
-        // 1. Resolve the type (int, string, or class ID)
+        // 1. Resolve the type
         Type t = type.semantMe();
 
-        // 2. Collision Check: Ensure not already defined in the CURRENT scope
+        // 2. Collision Check
         if (SymbolTable.getInstance().findInCurrentScope(name) != null) {
             throw new RuntimeException("ERROR(" + lineNumber + ")");
         }
 
-        // 3. Initial Value Semantics (Check before entering to prevent recursive use)
+        // 3. Initial Value Semantics
         if (initialValue != null) {
-            Type initType = initialValue.semantMe();
-            // Note: Add type compatibility checks here if needed (e.g., initType == t)
+            initialValue.semantMe();
         }
 
-        // 4. Register in Symbol Table
-        SymbolTable.getInstance().enter(name, t);
-
-        // 5. Capture the unique index for IR generation
-        SymbolTableEntry entry = SymbolTable.getInstance().findEntry(name);
-        if (entry != null) {
-            this.index = entry.prevtopIndex;
-        }
+        // 4. Register in Symbol Table and capture the entry ONCE
+        // This 'entry' now holds the 'offset' we might set later
         this.entry = SymbolTable.getInstance().enter(name, t);
 
         return t;
@@ -86,20 +79,21 @@ public class AstDecVar extends AstDec {
     /***************************/
     @Override
     public Temp irMe() {
-        // 1. If it's a global variable, we allocate it in .data
-        // If it's local, your stack logic (prologue) handles space
+        // 1. Check if it's Global (offset 0) or Local/Param (offset != 0)
         if (entry.offset == 0) {
+            // Allocate in the MIPS .data segment
             Ir.getInstance().AddIrCommand(new IrCommandAllocate(name));
         }
 
+        // 2. Handle Initialization (e.g., int x = 5;)
         if (initialValue != null) {
             Temp val = initialValue.irMe();
             
             if (entry.offset != 0) {
-                // LOCAL: Use offset, name is null
+                // LOCAL: MIPS will generate sw $t, offset($sp)
                 Ir.getInstance().AddIrCommand(new IrCommandStore(null, val, entry.offset));
             } else {
-                // GLOBAL: Use name, offset is 0
+                // GLOBAL: MIPS will generate sw $t, labelName
                 Ir.getInstance().AddIrCommand(new IrCommandStore(name, val, 0));
             }
         }

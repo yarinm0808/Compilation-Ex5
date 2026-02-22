@@ -58,13 +58,17 @@ public class AstStmtReturn extends AstStmt
 
 	@Override
 	public Temp irMe() {
+		String endLabel = ControlFlowContext.getInstance().getCurrentFunctionEndLabel();
+
 		if (exp != null) {
 			Temp val = exp.irMe();
-			Ir.getInstance().AddIrCommand(new IrCommandReturnVal(val));
+			// Pass BOTH the temp and the label here
+			Ir.getInstance().AddIrCommand(new IrCommandReturnVal(val, endLabel));
+		} else {
+			// If it's a void return, you still need to jump to the end!
+			// You might need a simple IrCommandJumpLabel for this case.
+			Ir.getInstance().AddIrCommand(new IrCommandJumpLabel(endLabel));
 		}
-		
-		String endLabel = ControlFlowContext.getInstance().getCurrentFunctionEndLabel();
-		Ir.getInstance().AddIrCommand(new IrCommandJump(endLabel));
 
 		return null;
 	}

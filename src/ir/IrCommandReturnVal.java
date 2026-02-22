@@ -9,14 +9,16 @@ import mips.*;
 
 public class IrCommandReturnVal extends IrCommand {
     public Temp valTemp;
-    public IrCommandReturnVal(Temp valTemp){
+    public String exitLabel;
+    public IrCommandReturnVal(Temp valTemp, String exitLabel){
         this.valTemp = valTemp;
+        this.exitLabel = exitLabel;
     }
 
     @Override
     public void mipsMe(Map<Temp, String> regMap) {
         String ArgReturnval = regMap.get(this.valTemp);
-        MipsGenerator.getInstance().ReturnValue(ArgReturnval);
+        MipsGenerator.getInstance().ReturnValue(ArgReturnval, exitLabel);
     }
 
     @Override

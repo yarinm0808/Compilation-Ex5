@@ -1,7 +1,12 @@
 package ast;
 
 import types.*;
+import ir.Ir;
+import ir.IrCommand;
+import ir.IrCommandJumpIfEqToZero;
+import ir.IrCommandLabel;
 import symboltable.*;
+import temp.Temp;
 
 public class AstStmtIf extends AstStmt
 {
@@ -81,5 +86,27 @@ public class AstStmtIf extends AstStmt
 		/* [4] Return value is irrelevant for if statement */
 		/**************************************************/
 		return null;		
+	}
+	@Override
+	public Temp irMe() {
+    	// 1. Create a label for the end of the IF statement
+    	String endLabel = IrCommand.getFreshLabel("end_if");
+
+    	// 2. Evaluate the condition
+    	Temp condTemp = cond.irMe();
+
+    	// 3. If condition is 0 (false), jump to endLabel
+    	// Ensure this matches the class name your LivenessAnalyzer expects
+    	Ir.getInstance().AddIrCommand(new IrCommandJumpIfEqToZero(condTemp, endLabel));
+
+    	// 4. Generate IR for the body (executes only if condition != 0)
+    	if (body != null) {
+        	body.irMe();
+    	}
+
+    	// 5. Add the end label
+    	Ir.getInstance().AddIrCommand(new IrCommandLabel(endLabel));
+
+    	return null;
 	}	
 }
