@@ -362,6 +362,19 @@ public class MipsGenerator
 
 		fileWriter.format("%s:\n", done);
 	}	
+	public void setPrintWriter(PrintWriter pw) {
+		// Close the dummy one opened in getInstance() if it exists
+		if (this.fileWriter != null) {
+			this.fileWriter.close();
+		}
+		this.fileWriter = pw;
+		
+		// Re-print the mandatory data section to the NEW file
+		this.fileWriter.print(".data\n");
+		this.fileWriter.print("string_access_violation: .asciiz \"Access Violation\"\n");
+		this.fileWriter.print("string_illegal_div_by_0: .asciiz \"Illegal Division By Zero\"\n");
+		this.fileWriter.print("string_invalid_ptr_dref: .asciiz \"Invalid Pointer Dereference\"\n");
+	}
 	
 	/**************************************/
 	/* USUAL SINGLETON IMPLEMENTATION ... */

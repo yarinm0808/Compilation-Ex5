@@ -1,89 +1,102 @@
 import java.io.*;
-import java.io.PrintWriter;
 import java_cup.runtime.Symbol;
 import ast.*;
 import ir.*;
 import mips.*;
 
-public class Main
-{
-	static public void main(String argv[])
-	{
-		Lexer l;
-		Parser p;
-		Symbol s;
-		AstDecList ast;
-		FileReader fileReader;
-		PrintWriter fileWriter;
-		String inputFileName = argv[0];
-		String outputFileName = argv[1];
+public class Main {
+    static public void main(String argv[]) {
+        Lexer l;
+        Parser p;
+        Symbol s;
+        AstDecList ast;
+        FileReader fileReader;
+        PrintWriter fileWriter;
 
-		try
-		{
-			/********************************/
-			/* [1] Initialize a file reader */
-			/********************************/
-			fileReader = new FileReader(inputFileName);
+        // Ensure we have the correct number of arguments
+        if (argv.length < 2) {
+            System.err.println("Usage: java Main <input_file> <output_file>");
+            System.exit(1);
+        }
 
-			/********************************/
-			/* [2] Initialize a file writer */
-			/********************************/
-			fileWriter = new PrintWriter(outputFileName);
+        String inputFileName = argv[0];
+        String outputFileName = argv[1];
 
-			/******************************/
-			/* [3] Initialize a new lexer */
-			/******************************/
-			l = new Lexer(fileReader);
+        try {
+            /********************************/
+            /* [1] Initialize a file reader */
+            /********************************/
+            fileReader = new FileReader(inputFileName);
 
-			/*******************************/
-			/* [4] Initialize a new parser */
-			/*******************************/
-			p = new Parser(l);
+            /********************************/
+            /* [2] Initialize a file writer */
+            /********************************/
+            fileWriter = new PrintWriter(outputFileName);
 
-			/***********************************/
-			/* [5] 3 ... 2 ... 1 ... Parse !!! */
-			/***********************************/
-			ast = (AstDecList) p.parse().value;
+            /******************************************/
+            /* [3] Link MipsGenerator to our output   */
+            /******************************************/
+            // This ensures MipsGenerator writes to the user-specified file
+            // instead of the hardcoded default.
+            MipsGenerator.getInstance().setPrintWriter(fileWriter);
 
-			/*************************/
-			/* [6] Print the AST ... */
-			/*************************/
-			ast.printMe();
+            /******************************/
+            /* [4] Initialize the Lexer   */
+            /******************************/
+            l = new Lexer(fileReader);
 
-			/**************************/
-			/* [7] Semant the AST ... */
-			/**************************/
-			ast.semantMe();
+            /*******************************/
+            /* [5] Initialize the Parser  */
+            /*******************************/
+            p = new Parser(l);
 
-			/**********************/
-			/* [8] Ir the AST ... */
-			/**********************/
-			ast.irMe();
+            /***********************************/
+            /* [6] 3 ... 2 ... 1 ... Parse !!! */
+            /***********************************/
+            ast = (AstDecList) p.parse().value;
 
-			/***********************/
-			/* [9] MIPS the Ir ... */
-			/***********************/
-			Ir.getInstance().mipsMe();
+            /*************************/
+            /* [7] Print the AST ... */
+            /*************************/
+            ast.printMe();
 
-			/**************************************/
-			/* [10] Finalize AST GRAPHIZ DOT file */
-			/**************************************/
-			AstGraphviz.getInstance().finalizeFile();
+            /**********************************/
+            /* [8] Semantic Analysis (Types)  */
+            /**********************************/
+            ast.semantMe();
 
-			/***************************/
-			/* [11] Finalize MIPS file */
-			/***************************/
-			MipsGenerator.getInstance().finalizeFile();
+            /**********************************/
+            /* [9] IR Generation              */
+            /**********************************/
+            // This fills the Ir singleton with commands
+            ast.irMe();
 
-			/**************************/
-			/* [12] Close output file */
-			/**************************/
-			fileWriter.close();
-		}
+            /***************************************************/
+            /* [10] MIPS Generation & Register Allocation      */
+            /***************************************************/
+            // This triggers the per-function liveness analysis,
+            // 10-register coloring, and MIPS emission.
+            Ir.getInstance().mipsMe();
 
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-	}
+            /**************************************/
+            /* [11] Finalize AST Graphviz file    */
+            /**************************************/
+            AstGraphviz.getInstance().finalizeFile();
+
+            /***************************************/
+            /* [12] Finalize MIPS file (Epilogue)  */
+            /***************************************/
+            // Prints the exit syscall and closes the fileWriter
+            MipsGenerator.getInstance().finalizeFile();
+
+            System.out.println("Compilation successful: " + outputFileName);
+
+        } catch (RuntimeException e) {
+            // This catches your "Register Allocation Failed" or "Semantic Error"
+            System.err.println(e.getMessage());
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

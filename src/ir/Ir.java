@@ -1,6 +1,11 @@
 package ir;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+
+import regalloc.LivenessAnalyzer;
+import regalloc.graph;
 import temp.Temp;
 
 public class Ir {
@@ -27,19 +32,57 @@ public class Ir {
             it.tail = new IrCommandList(cmd, null);
         }
     }
+    public List<IrCommand> flatten() {
+        List<IrCommand> list = new ArrayList<>();
+        if (this.head != null) {
+            list.add(this.head);
+        }
+        IrCommandList curr = this.tail;
+        while (curr != null && curr.head != null) {
+            list.add(curr.head);
+            curr = curr.tail;
+        }
+        return list;
+    }
 
     /**
      * Triggers MIPS generation for the entire program using the 
      * finalized register mapping.
      */
-    public void mipsMe(Map<Temp, String> regMap) {
-        if (head != null) {
-            head.mipsMe(regMap);
+    public void mipsMe() {
+            List<IrCommand> allCommands = flatten();
+            int i = 0;
+            while (i < allCommands.size()) {
+                // Check for the start of a function
+                if (allCommands.get(i) instanceof IrCommandPrologue) {
+                    int start = i;
+                    int end = i + 1;
+                    
+                    // Scan until the next prologue or end of list
+                    while (end < allCommands.size() && 
+                        !(allCommands.get(end) instanceof IrCommandPrologue)) {
+                        end++;
+                    }
+                    
+                    List<IrCommand> funcBody = allCommands.subList(start, end);
+                    
+                    // 1. Analyze
+                    LivenessAnalyzer la = new LivenessAnalyzer(funcBody);
+                    graph g = la.buildInterferenceGraph();
+                    
+                    // 2. Allocate (Throws error if coloring > 10 fails)
+                    Map<Temp, String> regMap = g.graphColor10();
+                    
+                    // 3. Generate
+                    for (IrCommand cmd : funcBody) {
+                        cmd.mipsMe(regMap);
+                    }
+                    i = end;
+                } else {
+                    i++;
+                }
+            }
         }
-        if (tail != null) {
-            tail.mipsMe(regMap);
-        }
-    }
 
     /**
      * Helper to get the full list for the LivenessAnalyzer.

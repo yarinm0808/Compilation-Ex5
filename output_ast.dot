@@ -1,0 +1,158 @@
+.data
+string_access_violation: .asciiz "Access Violation"
+string_illegal_div_by_0: .asciiz "Illegal Division By Zero"
+string_invalid_ptr_dref: .asciiz "Invalid Pointer Dereference"
+	addi $sp, $sp, -44
+	sw $ra, 40($sp)
+	sw $t0, 0($sp)
+	sw $t1, 4($sp)
+	sw $t2, 8($sp)
+	sw $t3, 12($sp)
+	sw $t4, 16($sp)
+	sw $t5, 20($sp)
+	sw $t6, 24($sp)
+	sw $t7, 28($sp)
+	sw $t8, 32($sp)
+	sw $t9, 36($sp)
+	li $t0,2
+	sw p, $t0
+	li $t0,2
+	sw start, $t0
+	li $t0,100
+	sw end, $t0
+Label_1_start:
+	lw $t0, p
+	lw $t2, end
+	li $t0,1
+	addu $t0,$t2,$t0
+	li $at, 32767
+	ble $t0, $at, upper_120
+	move $t0, $at
+	j done_121
+upper_120:
+	li $at, -32768
+	bge $t0, $at, done_121
+	move $t0, $at
+done_121:
+	beqz $t1,$zero,Label_0_end
+	li $t0,2
+	sw i, $t0
+	li $t0,2
+	sw j, $t0
+	li $t0,1
+	sw isPrime, $t0
+Label_3_start:
+	lw $t0, i
+	lw $t0, p
+	beqz $t1,$zero,Label_2_end
+	li $t0,2
+	sw j, $t0
+Label_5_start:
+	lw $t0, j
+	lw $t0, p
+	beqz $t1,$zero,Label_4_end
+	lw $t0, p
+	sw copyp, $t0
+Label_7_start:
+	lw $t1, i
+	lw $t0, j
+	mul $t1,$t1,$t0
+	li $at, 32767
+	ble $t1, $at, label_mul_upper_122
+	move $t1, $at
+	j label_mul_done_123
+label_mul_upper_122:
+	li $at, -32768
+	bge $t1, $at, label_mul_done_123
+	move $t1, $at
+label_mul_done_123:
+	lw $t0, copyp
+	beq $t1,$t0,label_assign_one_124
+	li $t0,0
+	j label_eq_end_125
+label_assign_one_124:
+	li $t0,1
+label_eq_end_125:
+	beqz $t0,$zero,Label_6_end
+	li $t0,0
+	sw isPrime, $t0
+	li $t0,0
+	sw copyp, $t0
+	j Label_7_start
+Label_6_end:
+	lw $t1, j
+	li $t0,1
+	addu $t0,$t1,$t0
+	li $at, 32767
+	ble $t0, $at, upper_126
+	move $t0, $at
+	j done_127
+upper_126:
+	li $at, -32768
+	bge $t0, $at, done_127
+	move $t0, $at
+done_127:
+	sw j, $t0
+	j Label_5_start
+Label_4_end:
+	lw $t1, i
+	li $t0,1
+	addu $t0,$t1,$t0
+	li $at, 32767
+	ble $t0, $at, upper_128
+	move $t0, $at
+	j done_129
+upper_128:
+	li $at, -32768
+	bge $t0, $at, done_129
+	move $t0, $at
+done_129:
+	sw i, $t0
+	j Label_3_start
+Label_2_end:
+	lw $t0, isPrime
+	sw copyisPrime, $t0
+Label_9_start:
+	lw $t0, copyisPrime
+	beqz $t0,$zero,Label_8_end
+	lw $t0, 22($sp)
+	subiu $sp, $sp, 4
+	sw $t0, 0($sp)
+	jal func_PrintInt
+	addiu $sp, $sp, 4
+	move $t0, $v0
+	li $t0,0
+	sw copyisPrime, $t0
+	j Label_9_start
+Label_8_end:
+	lw $t1, p
+	li $t0,1
+	addu $t0,$t1,$t0
+	li $at, 32767
+	ble $t0, $at, upper_130
+	move $t0, $at
+	j done_131
+upper_130:
+	li $at, -32768
+	bge $t0, $at, done_131
+	move $t0, $at
+done_131:
+	sw p, $t0
+	j Label_1_start
+Label_0_end:
+end_main:
+	lw $t0, 0($sp)
+	lw $t1, 4($sp)
+	lw $t2, 8($sp)
+	lw $t3, 12($sp)
+	lw $t4, 16($sp)
+	lw $t5, 20($sp)
+	lw $t6, 24($sp)
+	lw $t7, 28($sp)
+	lw $t8, 32($sp)
+	lw $t9, 36($sp)
+	lw $ra, 40($sp)
+	addi $sp, $sp, 44
+	jr $ra
+	li $v0,10
+	syscall

@@ -1,0 +1,119 @@
+digraph
+{
+graph [ordering = "out"]
+v1 [label = "VAR
+DEC(i)"];
+v1 -> v0;
+v3 [label = "VAR
+DEC(j)"];
+v3 -> v2;
+v5 [label = "VAR
+DEC(p)"];
+v5 -> v4;
+v7 [label = "VAR
+DEC(start)"];
+v7 -> v6;
+v9 [label = "VAR
+DEC(end)"];
+v9 -> v8;
+v11 [label = "VAR
+DEC(isPrime)"];
+v11 -> v10;
+v13 [label = "VAR
+DEC(copyp)"];
+v13 -> v12;
+v15 [label = "VAR
+DEC(copyisPrime)"];
+v15 -> v14;
+v17 [label = "VAR
+SIMPLE(p)"];
+v18 [label = "INT(2)"];
+v19 [label = "ASSIGN
+left := right
+"];
+v19 -> v17;
+v19 -> v18;
+v20 [label = "VAR
+SIMPLE(start)"];
+v21 [label = "INT(2)"];
+v22 [label = "ASSIGN
+left := right
+"];
+v22 -> v20;
+v22 -> v21;
+v23 [label = "VAR
+SIMPLE(end)"];
+v24 [label = "INT(100)"];
+v25 [label = "ASSIGN
+left := right
+"];
+v25 -> v23;
+v25 -> v24;
+v106 [label = "STMT
+LIST
+"];
+v106 -> v0;
+v107 [label = "STMT
+LIST
+"];
+v107 -> v25;
+v107 -> v106;
+v108 [label = "STMT
+LIST
+"];
+v108 -> v22;
+v108 -> v107;
+v109 [label = "STMT
+LIST
+"];
+v109 -> v19;
+v109 -> v108;
+v110 [label = "FUNC(main)
+:ast.AstTypeVoid@49476842
+"];
+v110 -> v109;
+v111 [label = "DEC
+LIST
+"];
+v111 -> v110;
+v112 [label = "DEC
+LIST
+"];
+v112 -> v15;
+v112 -> v111;
+v113 [label = "DEC
+LIST
+"];
+v113 -> v13;
+v113 -> v112;
+v114 [label = "DEC
+LIST
+"];
+v114 -> v11;
+v114 -> v113;
+v115 [label = "DEC
+LIST
+"];
+v115 -> v9;
+v115 -> v114;
+v116 [label = "DEC
+LIST
+"];
+v116 -> v7;
+v116 -> v115;
+v117 [label = "DEC
+LIST
+"];
+v117 -> v5;
+v117 -> v116;
+v118 [label = "DEC
+LIST
+"];
+v118 -> v3;
+v118 -> v117;
+v119 [label = "DEC
+LIST
+"];
+v119 -> v1;
+v119 -> v118;
+}

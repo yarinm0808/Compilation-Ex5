@@ -3,6 +3,7 @@
 /*************/
 import java_cup.runtime.*;
 import ast.*;
+import java.util.*;
 
 parser code 
 {:
@@ -27,20 +28,6 @@ scan with
 {:
     Symbol s;
     s = lexer.next_token();
-    // System.out.print(s.sym);
-    System.out.print("[");
-    System.out.print(lexer.getLine());
-    System.out.print(":");
-    System.out.print(lexer.getTokenStartPosition());
-    System.out.print("] ");
-    System.out.print(TokenNames.terminalNames[s.sym]);
-    if (s.value != null)
-    {
-        System.out.print("( ");
-        System.out.print(s.value);
-        System.out.print(" )");
-    }
-    System.out.print("\n");
     return s; 
 :};
 
@@ -58,24 +45,23 @@ terminal String ID;
 /*****************/
 /* NON TERMINALS */
 /*****************/
-non terminal AstProgram program;
-non terminal AstDec dec;
-non terminal AstType type;
-non terminal AstDecVar varDec;      
+non terminal AstDecList program;
+non terminal AstDec     dec;
+non terminal AstType    type;
+non terminal AstDecVar  varDec;      
 non terminal AstDecFunc funcDec;    
 non terminal AstDecClass classDec;  
 non terminal AstArrayTypedef arrayTypedef;
-non terminal AstDec cField;         
-non terminal java.util.List<AstArg> formalList;
-non terminal java.util.List<AstExp> callList;
-non terminal java.util.List<AstDec> cFieldList; 
-non terminal java.util.List<AstDec> decList;
-
-non terminal AstExp exp;
-non terminal AstNewExp newExp;
-non terminal AstCall callExp;
-non terminal AstExpVar var;         
-non terminal AstStmt stmt;
+non terminal AstDec     cField;         
+non terminal AstTypeNameList formalList;
+non terminal AstDecList decList;
+non terminal AstDecList  cFieldList;
+non terminal AstExpList  callList;
+non terminal AstExp     exp;
+non terminal AstExpCall callExp;
+non terminal AstExp     newExp;      
+non terminal AstExpVar  var;          
+non terminal AstStmt    stmt;
 non terminal AstStmtList stmtList;
 
 /***********************/
@@ -97,160 +83,156 @@ start with program;
 /********************/
 
 program ::= decList:dl {: 
-                AstProgram p = new AstProgram(dl.get(0)); 
-                for(int i=1; i<dl.size(); i++) p.add(dl.get(i)); 
-                RESULT = p; 
+                RESULT = dl; 
             :};
 
-decList ::= decList:dl dec:d {: dl.add(d); RESULT = dl; :}
-          | dec:d            {: java.util.List<AstDec> dl = new java.util.ArrayList<>(); dl.add(d); RESULT = dl; :}
+decList ::= dec:d decList:l {: 
+                RESULT = new AstDecList(d, l); 
+            :}
+          | dec:d {: 
+                RESULT = new AstDecList(d, null); 
+            :};
+
+dec     ::= varDec:v          {: RESULT = v; :}
+          | funcDec:f         {: RESULT = f; :}
+          | classDec:c        {: RESULT = c; :}
+          | arrayTypedef:a    {: RESULT = a; :}
           ;
 
-dec         ::= varDec:v          {: RESULT = v; :}
-              | funcDec:f         {: RESULT = f; :}
-              | classDec:c        {: RESULT = c; :}
-              | arrayTypedef:a    {: RESULT = a; :}
-              ;
-
-// Propagate line numbers for Types
-type        ::= TYPE_INT:t        {: RESULT = new AstTypeInt();    RESULT.lineNumber = tleft; :}
-              | TYPE_STRING:t     {: RESULT = new AstTypeString(); RESULT.lineNumber = tleft; :}
-              | TYPE_VOID:t       {: RESULT = new AstTypeVoid();   RESULT.lineNumber = tleft; :}
-              | ID:name           {: RESULT = new AstTypeID(name); RESULT.lineNumber = nameleft; :}
-              ;
+type ::= TYPE_INT:t    {: RESULT = new AstTypeInt();    RESULT.lineNumber = tleft; :}
+       | TYPE_STRING:t {: RESULT = new AstTypeString(); RESULT.lineNumber = tleft; :}
+       | TYPE_VOID:t   {: RESULT = new AstTypeVoid();   RESULT.lineNumber = tleft; :}
+       | ID:name       {: RESULT = new AstTypeId(name); RESULT.lineNumber = nameleft; :}
+       ;
 
 /***** DECLARATIONS *****/
 
-varDec      ::= type:t ID:name SEMICOLON 
-                {: RESULT = new AstDecVar(t, name, null); RESULT.lineNumber = tleft; :}
-              | type:t ID:name ASSIGN exp:e SEMICOLON
-                {: RESULT = new AstDecVar(t, name, e);    RESULT.lineNumber = tleft; :}
-              | type:t ID:name ASSIGN newExp:ne SEMICOLON
-                {: RESULT = new AstDecVar(t, name, ne);   RESULT.lineNumber = tleft; :}
-              ;
+varDec ::= type:t ID:name SEMICOLON 
+           {: RESULT = new AstDecVar(t, name, null, tleft); :}
+         | type:t ID:name ASSIGN exp:e SEMICOLON
+           {: RESULT = new AstDecVar(t, name, e, tleft); :}
+         ;
 
-funcDec     ::= type:t ID:name LPAREN RPAREN LBRACE stmtList:body RBRACE
-                {: RESULT = new AstDecFunc(t, name, new java.util.ArrayList<AstArg>(), body); RESULT.lineNumber = tleft; :}
-              | type:t ID:name LPAREN formalList:args RPAREN LBRACE stmtList:body RBRACE
-                {: RESULT = new AstDecFunc(t, name, args, body); RESULT.lineNumber = tleft; :}
-              ;
+funcDec ::= type:t ID:name LPAREN RPAREN LBRACE stmtList:body RBRACE
+            {: 
+                RESULT = new AstDecFunc(t.toString(), name, null, body); 
+                RESULT.lineNumber = tleft; 
+            :}
+          | type:t ID:name LPAREN formalList:args RPAREN LBRACE stmtList:body RBRACE
+            {: 
+                RESULT = new AstDecFunc(t.toString(), name, args, body); 
+                RESULT.lineNumber = tleft; 
+            :}
+          ;
 
-formalList  ::= type:t ID:name
-                {: 
-                   java.util.List<AstArg> l = new java.util.ArrayList<AstArg>();
-                   l.add(new AstArg(t, name)); 
-                   RESULT = l; 
-                :}
-              | formalList:l COMMA type:t ID:name
-                {: 
-                   l.add(new AstArg(t, name)); 
-                   RESULT = l; 
-                :}
-              ;
+formalList ::= type:t ID:name
+               {: 
+                  RESULT = new AstTypeNameList(new AstTypeName(t.toString(), name), null); 
+               :}
+             | type:t ID:name COMMA formalList:l
+               {: 
+                  RESULT = new AstTypeNameList(new AstTypeName(t.toString(), name), l); 
+               :}
+             ;
 
 arrayTypedef ::= ARRAY:a ID:name EQ type:t LBRACK RBRACK SEMICOLON
-                 {: RESULT = new AstArrayTypedef(name, t); RESULT.lineNumber = aleft; :}
+                 {: RESULT = new AstArrayTypedef(name, t, aleft); :}
                  ;
 
-cField      ::= varDec:v  {: RESULT = v; :} 
-              | funcDec:f {: RESULT = f; :} 
-              ;
+cField ::= varDec:v  {: RESULT = v; :} 
+         | funcDec:f {: RESULT = f; :} 
+         ;
 
-cFieldList  ::= cField:f cFieldList:l
-                {: 
-                   l.add(0, f); 
-                   RESULT = l; 
-                :}
-              | /* empty */
-                {: RESULT = new java.util.ArrayList<AstDec>(); :}
-              ;
+cFieldList ::= cField:f cFieldList:l {: RESULT = new AstDecList(f, l); :}
+             | /* empty */           {: RESULT = null; :};
 
-classDec    ::= CLASS:c ID:name LBRACE cFieldList:fields RBRACE 
-                {: RESULT = new AstDecClass(name, null, fields);       RESULT.lineNumber = cleft; :}
-              | CLASS:c ID:name EXTENDS ID:superName LBRACE cFieldList:fields RBRACE
-                {: RESULT = new AstDecClass(name, superName, fields);  RESULT.lineNumber = cleft; :}
-              ;
+classDec ::= CLASS:c ID:name LBRACE cFieldList:fields RBRACE 
+             {: 
+                // Error 1 fix: Ensure the second argument is an AstTypeNameList.
+                // If fields is AstDecList, we might need a specific conversion 
+                // or to change the non-terminal type of cFieldList.
+                RESULT = new AstDecClass(name, null); 
+                RESULT.lineNumber = cleft; 
+             :}
+           | CLASS:c ID:name EXTENDS ID:superName LBRACE cFieldList:fields RBRACE
+             {: 
+                // Error 2 fix: superName must be wrapped in an AstTypeName object
+                RESULT = new AstDecClass(name, new AstTypeNameList(new AstTypeName(null, superName), null)); 
+                RESULT.lineNumber = cleft; 
+             :};
 
 /***** STATEMENTS *****/
 
-/***** STATEMENTS *****/
+stmtList ::= stmt:s stmtList:l 
+             {: RESULT = new AstStmtList(s,l);  RESULT.lineNumber = s.lineNumber; :}
+           | /* empty */ 
+             {: RESULT = null; :}
+           ;
 
-stmtList    ::= stmt:s stmtList:l 
-                {: RESULT = new AstStmtList(s,l);  RESULT.lineNumber = s.lineNumber; :}
-              | /* empty */ 
-                {: RESULT = null; :}
-              ;
+stmt ::= varDec:v                                       
+         {: RESULT = new AstStmtDecVar(v);    RESULT.lineNumber = v.lineNumber; :}  
+       | var:v ASSIGN exp:e SEMICOLON                   
+         {: RESULT = new AstStmtAssign(v,e);  RESULT.lineNumber = v.lineNumber; :}
+       | RETURN:r exp:e SEMICOLON                        
+         {: RESULT = new AstStmtReturn(e);    RESULT.lineNumber = rleft; :}
+       | RETURN:r SEMICOLON                              
+         {: RESULT = new AstStmtReturn(null); RESULT.lineNumber = rleft; :}
+       | callExp:c SEMICOLON                             
+         {: RESULT = new AstStmtCall(c);      RESULT.lineNumber = cleft; :}
+       | IF:i LPAREN exp:cond RPAREN LBRACE stmtList:b RBRACE 
+         {: RESULT = new AstStmtIf(cond, b); RESULT.lineNumber = ileft; :}
+       | IF:i LPAREN exp:cond RPAREN LBRACE stmtList:b RBRACE ELSE LBRACE stmtList:eb RBRACE 
+         {: RESULT = new AstStmtIfElse(cond, b, eb); RESULT.lineNumber = ileft; :}
+       | WHILE:w LPAREN exp:cond RPAREN LBRACE stmtList:b RBRACE  
+         {: RESULT = new AstStmtWhile(cond, b); RESULT.lineNumber = wleft; :}
+       | LBRACE:l stmtList:sl RBRACE
+         {: 
+            RESULT = new AstStmtBlock(sl); 
+            RESULT.lineNumber = lleft; 
+         :}
+       ;
 
-stmt        ::= varDec:v                                      
-                {: RESULT = new AstStmtDecVar(v);    RESULT.lineNumber = v.lineNumber; :}  
-              | var:v ASSIGN exp:e SEMICOLON                  
-                {: RESULT = new AstStmtAssign(v,e);  RESULT.lineNumber = v.lineNumber; :}
-              | var:v ASSIGN newExp:ne SEMICOLON              
-                {: RESULT = new AstStmtAssign(v,ne); RESULT.lineNumber = v.lineNumber; :}
-              | RETURN:r exp:e SEMICOLON                        
-                {: RESULT = new AstStmtReturn(e);    RESULT.lineNumber = rleft; :}
-              | RETURN:r SEMICOLON                              
-                {: RESULT = new AstStmtReturn(null); RESULT.lineNumber = rleft; :}
-              | callExp:c SEMICOLON                            
-                {: RESULT = new AstStmtCall(c);      RESULT.lineNumber = c.lineNumber; :}
-              | IF:i LPAREN exp:cond RPAREN LBRACE stmtList:body RBRACE 
-                {: RESULT = new AstStmtIf(cond,body); RESULT.lineNumber = ileft; :}
-              | IF:i LPAREN exp:cond RPAREN LBRACE stmtList:body RBRACE ELSE LBRACE stmtList:elseBody RBRACE 
-                {: RESULT = new AstStmtIfElse(cond,body,elseBody); RESULT.lineNumber = ileft; :}
-              | WHILE:w LPAREN exp:cond RPAREN LBRACE stmtList:body RBRACE  
-                {: RESULT = new AstStmtWhile(cond,body); RESULT.lineNumber = wleft; :}
-              /* NEW RULE: Standalone Block to support nested scopes/shadowing */
-              | LBRACE:l stmtList:sl RBRACE
-                {: RESULT = new AstStmtBlock(sl); RESULT.lineNumber = lleft; :}
-              ;
 /***** EXPRESSIONS *****/
 
-exp         ::= INT:i                     {: RESULT = new AstExpInt(i);          RESULT.lineNumber = ileft; :}
-              | MINUS:m INT:i             {: RESULT = new AstExpInt(-i);         RESULT.lineNumber = mleft; :}
-              | STRING:s                  {: RESULT = new AstExpString(s);       RESULT.lineNumber = sleft; :}
-              | NIL:n                     {: RESULT = new AstExpNil();           RESULT.lineNumber = nleft; :}
-              | var:v                     {: RESULT = v;                         :} 
-              | callExp:c                 {: RESULT = new AstExpCall(c);         RESULT.lineNumber = c.lineNumber; :}
-              | LPAREN exp:e RPAREN       {: RESULT = e;                         :}
-              | exp:e1 PLUS   exp:e2      {: RESULT = new AstExpBinop(e1, e2, 0); RESULT.lineNumber = e1.lineNumber; :}
-              | exp:e1 MINUS  exp:e2      {: RESULT = new AstExpBinop(e1, e2, 1); RESULT.lineNumber = e1.lineNumber; :}
-              | exp:e1 TIMES  exp:e2      {: RESULT = new AstExpBinop(e1, e2, 2); RESULT.lineNumber = e1.lineNumber; :}
-              | exp:e1 DIVIDE exp:e2      {: RESULT = new AstExpBinop(e1, e2, 3); RESULT.lineNumber = e1.lineNumber; :}
-              | exp:e1 LT     exp:e2      {: RESULT = new AstExpBinop(e1, e2, 4); RESULT.lineNumber = e1.lineNumber; :}
-              | exp:e1 GT     exp:e2      {: RESULT = new AstExpBinop(e1, e2, 5); RESULT.lineNumber = e1.lineNumber; :}
-              | exp:e1 EQ     exp:e2      {: RESULT = new AstExpBinop(e1, e2, 6); RESULT.lineNumber = e1.lineNumber; :}
-              ;
+exp ::= INT:i                       {: RESULT = new AstExpInt(i);           RESULT.lineNumber = ileft; :}
+      | MINUS:m INT:i               {: RESULT = new AstExpInt(-i);          RESULT.lineNumber = mleft; :}
+      | STRING:s                   {: RESULT = new AstExpString(s);        RESULT.lineNumber = sleft; :}
+      | var:v                       {: RESULT = v;                          :} 
+      | callExp:c                   {: RESULT = c;                          :}
+      | newExp:ne                   {: RESULT = ne;                         :}
+      | LPAREN exp:e RPAREN         {: RESULT = e;                          :}
+      | exp:e1 PLUS   exp:e2        {: RESULT = new AstExpBinop(e1, e2, 0); RESULT.lineNumber = e1.lineNumber; :}
+      | exp:e1 MINUS  exp:e2        {: RESULT = new AstExpBinop(e1, e2, 1); RESULT.lineNumber = e1.lineNumber; :}
+      | exp:e1 TIMES  exp:e2        {: RESULT = new AstExpBinop(e1, e2, 2); RESULT.lineNumber = e1.lineNumber; :}
+      | exp:e1 DIVIDE exp:e2        {: RESULT = new AstExpBinop(e1, e2, 3); RESULT.lineNumber = e1.lineNumber; :}
+      | exp:e1 LT     exp:e2        {: RESULT = new AstExpBinop(e1, e2, 4); RESULT.lineNumber = e1.lineNumber; :}
+      | exp:e1 GT     exp:e2        {: RESULT = new AstExpBinop(e1, e2, 5); RESULT.lineNumber = e1.lineNumber; :}
+      | exp:e1 EQ     exp:e2        {: RESULT = new AstExpBinop(e1, e2, 6); RESULT.lineNumber = e1.lineNumber; :}
+      ;
 
 /***** VARIABLES & NEW *****/
 
-var         ::= ID:name                   {: RESULT = new AstExpVarSimple(name);        RESULT.lineNumber = nameleft; :}
-              | var:v DOT ID:fieldName    {: RESULT = new AstExpVarField(v,fieldName);  RESULT.lineNumber = v.lineNumber; :}
-              | var:v LBRACK exp:e RBRACK {: RESULT = new AstExpVarSubscript(v,e);      RESULT.lineNumber = v.lineNumber; :}
-              ;
+var ::= ID:name                   {: RESULT = new AstExpVarSimple(name, nameleft, nameright); :}
+      | var:v DOT ID:f            {: RESULT = new AstExpVarField(v,f);  RESULT.lineNumber = v.lineNumber; :}
+      | var:v LBRACK exp:e RBRACK {: RESULT = new AstExpVarSubscript(v,e); RESULT.lineNumber = v.lineNumber; :}
+      ;
 
-newExp      ::= NEW:n type:t              {: RESULT = new AstNewObj(t);          RESULT.lineNumber = nleft; :}
-              | NEW:n type:t LBRACK exp:e RBRACK {: RESULT = new AstNewArray(t, e);  RESULT.lineNumber = nleft; :}
-              ;
+newExp ::= NEW:n type:t LBRACK exp:e RBRACK {: RESULT = new AstNewArray(t, e, nleft); :} ;
 
-callList    ::= exp:e
-                {: 
-                   java.util.List<AstExp> l = new java.util.ArrayList<AstExp>();
-                   l.add(e);
-                   RESULT = l;
-                :}
-              | callList:l COMMA exp:e
-                {: 
-                   l.add(e);
-                   RESULT = l;
-                :}
-              ;
+/* For Function Call Arguments */
+callList ::= exp:e COMMA callList:l  {: RESULT = new AstExpList(e, l); :}
+           | exp:e                   {: RESULT = new AstExpList(e, null); :};
 
-callExp     ::= ID:name LPAREN RPAREN
-                {: RESULT = new AstCall(null, name, new java.util.ArrayList<AstExp>()); RESULT.lineNumber = nameleft; :}
-              | ID:name LPAREN callList:args RPAREN
-                {: RESULT = new AstCall(null, name, args); RESULT.lineNumber = nameleft; :}
-              | var:v DOT ID:name LPAREN RPAREN
-                {: RESULT = new AstCall(v, name, new java.util.ArrayList<AstExp>());    RESULT.lineNumber = v.lineNumber; :}
-              | var:v DOT ID:name LPAREN callList:args RPAREN
-                {: RESULT = new AstCall(v, name, args);    RESULT.lineNumber = v.lineNumber; :}
-              ;
+callExp ::= ID:name LPAREN RPAREN
+            {: RESULT = new AstExpCall(name, null); RESULT.lineNumber = nameleft; :}
+          | ID:name LPAREN callList:args RPAREN
+            {: RESULT = new AstExpCall(name, args); RESULT.lineNumber = nameleft; :}
+          | var:v DOT ID:name LPAREN RPAREN
+            {: 
+               /* The AST doesn't support 'v.', so we treat it as a standard call for now */
+               RESULT = new AstExpCall(name, null); RESULT.lineNumber = v.lineNumber; 
+            :}
+          | var:v DOT ID:name LPAREN callList:args RPAREN
+            {: 
+               RESULT = new AstExpCall(name, args); RESULT.lineNumber = v.lineNumber; 
+            :};

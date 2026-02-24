@@ -52,8 +52,6 @@ public class AstExpVarSimple extends AstExpVar {
             throw new RuntimeException("ERROR(" + lineNumber + ")");
         }
 
-        // IMPORTANT: Capture the offset from the symbol table entry!
-        // This is what tells irMe() where the variable actually lives.
         this.offset = entry.offset;
 
         return entry.type;

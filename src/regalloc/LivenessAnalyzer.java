@@ -13,23 +13,9 @@ public class LivenessAnalyzer {
     private Map<Integer, Set<Temp>> liveIn = new HashMap<>();
     private Map<Integer, Set<Temp>> liveOut = new HashMap<>();
 
-    public LivenessAnalyzer(IrCommandList commandList) {
-        this.commands = flattenList(commandList);
+    public LivenessAnalyzer(List<IrCommand> commands) {
+        this.commands = commands;
         buildLabelMap();
-    }
-
-    /**
-     * Converts the recursive IrCommandList into a flat ArrayList 
-     * for easy index-based access and successor tracking.
-     */
-    private List<IrCommand> flattenList(IrCommandList list) {
-        List<IrCommand> flat = new ArrayList<>();
-        IrCommandList curr = list;
-        while (curr != null && curr.head != null) {
-            flat.add(curr.head);
-            curr = curr.tail;
-        }
-        return flat;
     }
 
     /**
