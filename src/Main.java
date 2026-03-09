@@ -3,6 +3,11 @@ import java_cup.runtime.Symbol;
 import ast.*;
 import ir.*;
 import mips.*;
+import symboltable.SymbolTable;
+import types.TypeFunction;
+import types.TypeInt;
+import types.TypeList;
+import types.TypeVoid;
 
 public class Main {
     static public void main(String argv[]) {
@@ -54,6 +59,13 @@ public class Main {
             /* [6] 3 ... 2 ... 1 ... Parse !!! */
             /***********************************/
             ast = (AstDecList) p.parse().value;
+
+            symboltable.SymbolTable.getInstance().enter("int", types.TypeInt.getInstance());
+            symboltable.SymbolTable.getInstance().enter("string", types.TypeString.getInstance());
+            symboltable.SymbolTable.getInstance().enter("void", types.TypeVoid.getInstance());
+
+            TypeList printIntParams = new TypeList(TypeInt.getInstance(), null);
+            SymbolTable.getInstance().enter("PrintInt", new TypeFunction(TypeVoid.getInstance(), "PrintInt", printIntParams));
 
             /*************************/
             /* [7] Print the AST ... */

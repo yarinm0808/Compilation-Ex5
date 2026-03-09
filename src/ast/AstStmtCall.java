@@ -1,6 +1,7 @@
 package ast;
 
 import temp.*;
+import types.*;
 
 public class AstStmtCall extends AstStmt
 {
@@ -37,6 +38,16 @@ public class AstStmtCall extends AstStmt
 		/* PRINT Edges to AST GRAPHVIZ DOT file */
 		/****************************************/
 		AstGraphviz.getInstance().logEdge(serialNumber,callExp.serialNumber);
+	}
+
+	@Override
+	public Type semantMe() {
+		// This MUST call semantMe on the underlying expression 
+		// to ensure all variables inside it are linked to the Symbol Table.
+		if (callExp != null) {
+			callExp.semantMe();
+		}
+		return null;
 	}
 
 	public Temp irMe()

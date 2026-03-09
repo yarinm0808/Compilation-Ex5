@@ -14,7 +14,7 @@ import java.util.List;
 /* PROJECT IMPORTS */
 /*******************/
 import mips.*;
-import temp.Temp;
+import temp.Temp;	
 
 public class IrCommandAllocate extends IrCommand
 {
@@ -32,9 +32,10 @@ public class IrCommandAllocate extends IrCommand
 	{
 		MipsGenerator.getInstance().allocate(varName);
 	}
-	    @Override
+	
+	@Override
     public List<Temp> GetUsedTemps() {
-        return null;
+        return new ArrayList<Temp>();
     }
     @Override
     public List<Temp> GetDefTemps() {

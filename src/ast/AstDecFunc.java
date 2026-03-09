@@ -124,30 +124,35 @@ public class AstDecFunc extends AstDec
 	}
 
 	public Temp irMe() {
-        String entryLabel = "func_" + name;
-        String exitLabel  = "end_" + name;
+		String entryLabel = "func_" + name;
+		String exitLabel  = "end_" + name;
 
-        ControlFlowContext.getInstance().setCurrentFunctionEndLabel(exitLabel);
+		ControlFlowContext.getInstance().setCurrentFunctionEndLabel(exitLabel);
+		System.out.println("[DEBUG] Creating IR Label Command for: " + entryLabel);
 
-        Ir.getInstance().AddIrCommand(new IrCommandLabel(entryLabel));
-        Ir.getInstance().AddIrCommand(new IrCommandPrologue());
+		Ir.getInstance().AddIrCommand(new IrCommandLabel(entryLabel));
+		Ir.getInstance().AddIrCommand(new IrCommandPrologue());
 
-        // Assigning offsets to params:
-        int currentOffset = 44; 
-        for (AstTypeNameList it = params; it != null; it = it.tail) {
-            // it.head.entry was set in semantMe
-            if (it.head.entry != null) {
-                it.head.entry.setOffset(currentOffset);
-            }
-            currentOffset += 4;
-        }
+		// [1] Assigning offsets to params (Starting at 44)
+		int currentParamOffset = 8; 
+		for (AstTypeNameList it = params; it != null; it = it.tail) {
+			it.head.entry.setOffset(currentParamOffset);
+			currentParamOffset += 4;
+		}
 
-        if (body != null) body.irMe();
+		// [2] Reset the Local Variable Counter
+		// We start local variables at offset 0 (relative to the frame, handled by your Prologue)
+		// or a specific offset based on how you save registers.
+		// If your prologue handles $fp, locals usually start at -4, -8, etc. 
+		// For simplicity, let's use positive offsets starting at 0:
+		StackOffsetManager.getInstance().reset(0); 
 
-        Ir.getInstance().AddIrCommand(new IrCommandLabel(exitLabel));
-        Ir.getInstance().AddIrCommand(new IrCommandEpilogue());
-        Ir.getInstance().AddIrCommand(new IrCommandJumpToRa());
+		if (body != null) body.irMe();
 
-        return null;
-    }
+		Ir.getInstance().AddIrCommand(new IrCommandLabel(exitLabel));
+		Ir.getInstance().AddIrCommand(new IrCommandEpilogue());
+		Ir.getInstance().AddIrCommand(new IrCommandJumpToRa());
+
+		return null;
+	}
 }

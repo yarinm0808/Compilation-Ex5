@@ -62,14 +62,12 @@ public class AstStmtReturn extends AstStmt
 
 		if (exp != null) {
 			Temp val = exp.irMe();
-			// Pass BOTH the temp and the label here
+			// Match your constructor: (Temp, String)
 			Ir.getInstance().AddIrCommand(new IrCommandReturnVal(val, endLabel));
 		} else {
-			// If it's a void return, you still need to jump to the end!
-			// You might need a simple IrCommandJumpLabel for this case.
-			Ir.getInstance().AddIrCommand(new IrCommandJumpLabel(endLabel));
+			// For void returns, just jump to the exit
+			Ir.getInstance().AddIrCommand(new IrCommandJump(endLabel));
 		}
-
 		return null;
 	}
 

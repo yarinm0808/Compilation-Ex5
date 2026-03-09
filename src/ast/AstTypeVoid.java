@@ -10,4 +10,6 @@ public class AstTypeVoid extends AstType {
     public Type semantMe(){
         return TypeVoid.getInstance();
     }
+
+    public String toString() { return "void"; }
 }

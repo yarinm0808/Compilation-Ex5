@@ -16,17 +16,20 @@ public class AstExpVarSimple extends AstExpVar {
     /* DATA MEMBERS */
     /****************/
     public String name;
-    public int index; // To be retrieved from the Symbol Table
-    public int offset;
+    
+    /** * This field is the "bridge." It is filled during semantMe() 
+     * and used during irMe(). This prevents the "Symbol disappeared" 
+     * error when the Symbol Table clears at the end of a scope.
+     */
+    private SymbolTableEntry entry; 
 
     /******************/
     /* CONSTRUCTOR(S) */
     /******************/
-    public AstExpVarSimple(String name, int line, int offset) {
+    public AstExpVarSimple(String name, int line, int column) {
         this.serialNumber = AstNodeSerialNumber.getFresh();
         this.lineNumber = line;
         this.name = name;
-        this.offset = offset;
     }
 
     /***********************************************************/
@@ -46,15 +49,15 @@ public class AstExpVarSimple extends AstExpVar {
     /*********************************/
     @Override
     public Type semantMe() {
-        SymbolTableEntry entry = SymbolTable.getInstance().findEntry(name);
+        // [1] Find the entry in the Symbol Table
+        this.entry = SymbolTable.getInstance().findEntry(name);
 
-        if (entry == null) {
-            throw new RuntimeException("ERROR(" + lineNumber + ")");
+        if (this.entry == null) {
+            throw new RuntimeException("ERROR(" + lineNumber + "): Variable " + name + " is not defined.");
         }
 
-        this.offset = entry.offset;
-
-        return entry.type;
+        // [2] Return the type found in the entry
+        return this.entry.type;
     }
 
     /***************************/
@@ -64,15 +67,25 @@ public class AstExpVarSimple extends AstExpVar {
     public Temp irMe() {
         Temp t = TempFactory.getInstance().getFreshTemp();
         
-        if (this.offset != 0) {
+        // [3] Use the PERSISTENT entry saved during semantics.
+        // We do NOT call SymbolTable.findEntry here because the 
+        // local scope may have already been closed.
+        if (this.entry == null) {
+            throw new RuntimeException("Internal Error: Variable " + name + " has no linked SymbolTableEntry.");
+        }
+
+        // [4] Check if it's Global (Level 0) or Local/Param (Level > 0)
+        if (this.entry.scopeLevel > 0) {
             /**************************************************/
-            /* LOCAL/PARAM: Name is null, use stack offset    */
+            /* LOCAL/PARAM: Use stack offset                  */
             /**************************************************/
-            Ir.getInstance().AddIrCommand(new IrCommandLoad(t, null, this.offset));
+            // MIPS logic: lw $tX, offset($sp)
+            Ir.getInstance().AddIrCommand(new IrCommandLoad(t, null, this.entry.offset));
         } else {
             /**************************************************/
-            /* GLOBAL: Use name, offset is 0                  */
+            /* GLOBAL: Use name                               */
             /**************************************************/
+            // MIPS logic: lw $tX, global_name
             Ir.getInstance().AddIrCommand(new IrCommandLoad(t, name, 0));
         }
         

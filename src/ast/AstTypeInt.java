@@ -10,5 +10,7 @@ public class AstTypeInt extends AstType{
     public Type semantMe(){
         return TypeInt.getInstance();
     }
+
+    public String toString() { return "int"; }
     
 }

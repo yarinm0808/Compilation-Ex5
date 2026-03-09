@@ -10,4 +10,6 @@ public class AstTypeString extends AstType {
     public Type semantMe(){
         return TypeString.getInstance();
     }
+
+    public String toString() { return "string"; }
 }

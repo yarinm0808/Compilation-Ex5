@@ -7,6 +7,7 @@ package mips;
 /* GENERAL IMPORTS */
 /*******************/
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.List;
 
 import ast.AstNodeSerialNumber;
@@ -26,9 +27,10 @@ public class MipsGenerator
 	/***********************/
 	/* The file writer ... */
 	/***********************/
-	public void finalizeFile()
-	{
-		fileWriter.print("\tli $v0,10\n");
+	public void finalizeFile() {
+		fileWriter.print("\nmain:\n");
+		fileWriter.print("\tjal func_main\n");
+		fileWriter.print("\tli $v0, 10\n");
 		fileWriter.print("\tsyscall\n");
 		fileWriter.close();
 	}
@@ -41,6 +43,10 @@ public class MipsGenerator
 		fileWriter.format("\tli $a0,32\n");
 		fileWriter.format("\tli $v0,11\n");
 		fileWriter.format("\tsyscall\n");
+	}
+	public void moveA0(String srcReg) {
+		// This moves the value into the physical argument register
+		fileWriter.format("\tmove $a0, %s\n", srcReg);
 	}
 	public void call(String physicalDst, String funcName, List<String> physicalArgs) {
 		// 1. Push arguments onto the stack
@@ -79,25 +85,30 @@ public class MipsGenerator
 //
 //		return t;
 //	}
-	public void allocate(String varName)
-	{
-		fileWriter.format(".data\n");
-		fileWriter.format("\tglobal_%s: .word 721\n",varName);
-	}
-	public void load(String dstReg, String varName, int offset) {
-		if (varName == null) {
-			// It's a Local or a Parameter
-			fileWriter.format("\tlw %s, %d($sp)\n", dstReg, offset);
-		} else {
-			// It's a Global variable
-			fileWriter.format("\tlw %s, %s\n", dstReg, varName);
-		}
+	public void allocate(String varName) {
+		fileWriter.println("\n.data");               // Flicker to data
+		fileWriter.format("%s: .word 721\n", varName); // Drop variable
+		fileWriter.println(".text");                 // Flicker back to text
+		fileWriter.flush();
 	}
 	public void store(String srcReg, String varName, int offset) {
-		if (varName == null) {
-			fileWriter.format("\tsw %s, %d($sp)\n", srcReg, offset);
+		if (varName == null || "null".equals(varName)) {
+			// -44 is the start of local space relative to FP in the reference
+			int fpOffset = -44 - offset; 
+			fileWriter.format("\tsw %s, %d($fp)\n", srcReg, fpOffset);
 		} else {
 			fileWriter.format("\tsw %s, %s\n", srcReg, varName);
+		}
+	}
+
+	public void load(String destReg, String varName, int offset) {
+		if (varName == null || "null".equals(varName)) {
+			// If offset is positive (>=8), it's a parameter. 
+			// If offset is 0, it's a local (needs -44).
+			int finalOffset = (offset >= 8) ? offset : (-44 - offset);
+			fileWriter.format("\tlw %s, %d($fp)\n", destReg, finalOffset);
+		} else {
+			fileWriter.format("\tlw %s, %s\n", destReg, varName);
 		}
 	}
 	public void li(String idx, int value)
@@ -135,29 +146,31 @@ public class MipsGenerator
 	}
 
 	public void prologue() {
-		// 1. Move stack pointer down by 44 bytes
-		fileWriter.format("\taddi $sp, $sp, -44\n");
+		fileWriter.format("\tsubu $sp, $sp, 4\n");
+		fileWriter.format("\tsw $ra, 0($sp)\n");
+		fileWriter.format("\tsubu $sp, $sp, 4\n");
+		fileWriter.format("\tsw $fp, 0($sp)\n");
+		fileWriter.format("\tmove $fp, $sp\n");
 		
-		// 2. Save the Return Address
-		fileWriter.format("\tsw $ra, 40($sp)\n");
-		
-		// 3. Save all 10 temporary registers
+		// Save registers $t0-$t9 (40 bytes)
 		for (int i = 0; i <= 9; i++) {
-			fileWriter.format("\tsw $t%d, %d($sp)\n", i, i * 4);
+			fileWriter.format("\tsubu $sp, $sp, 4\n");
+			fileWriter.format("\tsw $t%d, 0($sp)\n", i);
 		}
+		
+		// Allocate space for locals (e.g., 16 bytes for 4 locals)
+		fileWriter.format("\tsubu $sp, $sp, 16\n");
 	}
 
 	public void epilogue() {
-		// 1. Restore all 10 temporary registers
+		fileWriter.format("\tmove $sp, $fp\n");
+		// Restore registers using negative offsets from the frame pointer
 		for (int i = 0; i <= 9; i++) {
-			fileWriter.format("\tlw $t%d, %d($sp)\n", i, i * 4);
+			fileWriter.format("\tlw $t%d, %d($sp)\n", i, -(i + 1) * 4);
 		}
-		
-		// 2. Restore the Return Address
-		fileWriter.format("\tlw $ra, 40($sp)\n");
-		
-		// 3. Move stack pointer back up
-		fileWriter.format("\taddi $sp, $sp, 44\n");
+		fileWriter.format("\tlw $fp, 0($sp)\n");
+		fileWriter.format("\tlw $ra, 4($sp)\n");
+		fileWriter.format("\taddu $sp, $sp, 8\n"); // Clean up RA and FP space
 	}
 
 	public void add(String dst, String oprnd1, String oprnd2)
@@ -182,9 +195,9 @@ public class MipsGenerator
 		fileWriter.format("%s:\n", done);
 	}
 	public void add(String command) {
-    // Simply print the string with a tab for formatting
-    fileWriter.format("\t%s\n", command);
-}
+    	// Simply print the string with a tab for formatting
+    	fileWriter.format("\t%s\n", command);
+	}
 
 	public void sub(String dstidx, String i1, String i2){
 
@@ -287,18 +300,39 @@ public class MipsGenerator
 		
 		fileWriter.format("%s:\n", label_ok);
 	}
-	public void label(String inlabel)
-	{
-		if (inlabel.equals("main"))
-		{
-			fileWriter.format(".text\n"); 
-			fileWriter.format("%s:\n",inlabel);
+
+	public void allocateString(String varName, String content) {
+		System.out.println("[DEBUG] Writing to File: .data " + varName + " : .asciiz " + content);
+		fileWriter.println("\n.data");               // Flicker to data
+		String strLabel = varName + "_str";
+		fileWriter.format("%s: .asciiz %s\n", strLabel, content);
+		fileWriter.format("%s: .word %s\n", varName, strLabel);
+		fileWriter.println(".text");                 // Flicker back to text
+		fileWriter.flush();
+	}
+	public void printString(String regName) {
+		// 1. Move the address of the string to $a0
+		fileWriter.format("\tmove $a0, %s\n", regName);
+		
+		// 2. Load syscall code 4 (print_string) into $v0
+		fileWriter.format("\tli $v0, 4\n");
+		
+		// 3. Trigger the syscall
+		fileWriter.format("\tsyscall\n");
+		fileWriter.flush();
+	}
+
+	public void label(String inlabel) {
+		// We only force .text for the very first function or 
+		// leave it out entirely if you already print it in the constructor.
+		if (inlabel.startsWith("func_")) {
+			fileWriter.print("\n"); // Just a newline for readability
 		}
-		else
-		{
-			fileWriter.format("%s:\n",inlabel);
-		}
-	}	
+		
+		// Print the label at the start of the line, followed by a colon
+		fileWriter.print(inlabel + ":\n");
+		fileWriter.flush();
+	}
 	public void jump(String inlabel)
 	{
 		fileWriter.format("\tj %s\n",inlabel);
@@ -319,9 +353,8 @@ public class MipsGenerator
 	{	
 		fileWriter.format("\tbeq %s,%s,%s\n",i1,i2,label);				
 	}
-	public void beqz(String i1, String label)
-	{			
-		fileWriter.format("\tbeqz %s,$zero,%s\n",i1,label);				
+	public void beqz(String i1, String label) {           
+		fileWriter.format("\tbeqz %s, %s\n", i1, label); // Removed $zero
 	}
 	public void check_division_by_zero(String denominator) {
     	String illegalDivLabel = "label_illegal_div_" + AstNodeSerialNumber.getFresh();
@@ -363,17 +396,12 @@ public class MipsGenerator
 		fileWriter.format("%s:\n", done);
 	}	
 	public void setPrintWriter(PrintWriter pw) {
-		// Close the dummy one opened in getInstance() if it exists
-		if (this.fileWriter != null) {
-			this.fileWriter.close();
-		}
 		this.fileWriter = pw;
-		
-		// Re-print the mandatory data section to the NEW file
-		this.fileWriter.print(".data\n");
-		this.fileWriter.print("string_access_violation: .asciiz \"Access Violation\"\n");
-		this.fileWriter.print("string_illegal_div_by_0: .asciiz \"Illegal Division By Zero\"\n");
-		this.fileWriter.print("string_invalid_ptr_dref: .asciiz \"Invalid Pointer Dereference\"\n");
+		fileWriter.print(".data\n");
+		fileWriter.print("string_access_violation: .asciiz \"Access Violation\\n\"\n");
+		fileWriter.print("string_illegal_div_by_0: .asciiz \"Illegal Division By Zero\\n\"\n");
+		fileWriter.print("string_invalid_ptr_dref: .asciiz \"Invalid Pointer Dereference\\n\"\n");
+		fileWriter.print(".text\n"); // Start the text segment immediately
 	}
 	
 	/**************************************/
@@ -423,6 +451,7 @@ public class MipsGenerator
 			instance.fileWriter.print("string_access_violation: .asciiz \"Access Violation\"\n");
 			instance.fileWriter.print("string_illegal_div_by_0: .asciiz \"Illegal Division By Zero\"\n");
 			instance.fileWriter.print("string_invalid_ptr_dref: .asciiz \"Invalid Pointer Dereference\"\n");
+			instance.fileWriter.println(".text");
 		}
 		return instance;
 	}

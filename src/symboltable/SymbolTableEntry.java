@@ -12,6 +12,9 @@ public class SymbolTableEntry
     public int prevtopIndex;
     public int lineNumber;
     public int offset; 
+    
+    // NEW: Added scopeLevel to distinguish Global (0) from Local (>0)
+    public int scopeLevel; 
 
     public SymbolTableEntry(
         String name,
@@ -20,7 +23,8 @@ public class SymbolTableEntry
         SymbolTableEntry next,
         SymbolTableEntry prevtop,
         int prevtopIndex,
-        int lineNumber)
+        int lineNumber,
+        int scopeLevel) // Added parameter here
     {
         this.index = index;
         this.name = name;
@@ -29,16 +33,19 @@ public class SymbolTableEntry
         this.prevtop = prevtop;
         this.prevtopIndex = prevtopIndex;
         this.lineNumber = lineNumber;
+        this.scopeLevel = scopeLevel; // Initialize the level
     }
 
-    /**************************************************/
-    /* NEW: Method to set the offset during IR phase */
-    /**************************************************/
     public void setOffset(int offset) {
         this.offset = offset;
     }
 
     public int getIndex() {
         return this.index;
+    }
+
+    // NEW: Helper to check if global
+    public boolean isGlobal() {
+        return scopeLevel == 0;
     }
 }

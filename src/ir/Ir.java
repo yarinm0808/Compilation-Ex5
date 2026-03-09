@@ -50,40 +50,38 @@ public class Ir {
      * finalized register mapping.
      */
     public void mipsMe() {
-            List<IrCommand> allCommands = flatten();
-            int i = 0;
-            while (i < allCommands.size()) {
-                // Check for the start of a function
-                if (allCommands.get(i) instanceof IrCommandPrologue) {
-                    int start = i;
-                    int end = i + 1;
-                    
-                    // Scan until the next prologue or end of list
-                    while (end < allCommands.size() && 
-                        !(allCommands.get(end) instanceof IrCommandPrologue)) {
-                        end++;
-                    }
-                    
-                    List<IrCommand> funcBody = allCommands.subList(start, end);
-                    
-                    // 1. Analyze
-                    LivenessAnalyzer la = new LivenessAnalyzer(funcBody);
-                    graph g = la.buildInterferenceGraph();
-                    
-                    // 2. Allocate (Throws error if coloring > 10 fails)
-                    Map<Temp, String> regMap = g.graphColor10();
-                    
-                    // 3. Generate
-                    for (IrCommand cmd : funcBody) {
-                        cmd.mipsMe(regMap);
-                    }
-                    i = end;
-                } else {
-                    i++;
+        List<IrCommand> allCommands = flatten();
+        int i = 0;
+        while (i < allCommands.size()) {
+            IrCommand current = allCommands.get(i);
+
+            if (current instanceof IrCommandLabel || current instanceof IrCommandPrologue) {
+                // --- EXISTING FUNCTION BLOCK LOGIC ---
+                int start = i;
+                int end = i + 1;
+                while (end < allCommands.size() && 
+                    !(allCommands.get(end) instanceof IrCommandPrologue) &&
+                    !(allCommands.get(end) instanceof IrCommandLabel)) {
+                    end++;
                 }
+                List<IrCommand> funcBody = allCommands.subList(start, end);
+                
+                // Register allocation and MIPS emission for the function
+                LivenessAnalyzer la = new LivenessAnalyzer(funcBody);
+                Map<Temp, String> regMap = la.buildInterferenceGraph().graphColor10();
+                for (IrCommand cmd : funcBody) {
+                    cmd.mipsMe(regMap);
+                }
+                i = end; 
+            } else {
+                // --- NEW GLOBAL COMMAND LOGIC ---
+                // If it's a global allocation, it doesn't need register mapping!
+                System.out.println("[DEBUG] Processing Global Command: " + current.getClass().getSimpleName());
+                current.mipsMe(null); 
+                i++;
             }
         }
-
+    }
     /**
      * Helper to get the full list for the LivenessAnalyzer.
      * This creates a wrapper list starting from the head.

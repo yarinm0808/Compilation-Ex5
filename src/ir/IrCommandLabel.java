@@ -23,6 +23,7 @@ public class IrCommandLabel extends IrCommand
     public void mipsMe(Map<Temp, String> regMap)
     {
         // Labels don't use any registers, so we just pass the name
+        System.out.println("[DEBUG] Processing MIPS Label: " + this.labelName);
         MipsGenerator.getInstance().label(labelName);
     }
 

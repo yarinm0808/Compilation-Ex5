@@ -1,8 +1,8 @@
 package ast;
-
 import types.*;
 import temp.*;
 import ir.*;
+
 import symboltable.SymbolTable;
 import symboltable.SymbolTableEntry;
 

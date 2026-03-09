@@ -36,8 +36,14 @@ public class IrCommandStore extends IrCommand
 	@Override
 	public void mipsMe(java.util.Map<Temp, String> regMap)
 	{
+		if (regMap == null) {
+        // If we are in the global scope, we don't 'store' via registers.
+        // The allocation command already set the value in .data.
+        return; 
+    }
 		String StrSrc = regMap.get(this.src);
-		MipsGenerator.getInstance().store(varName,StrSrc, offset);
+		// Correct order: Register first, then Name, then Offset
+		MipsGenerator.getInstance().store(StrSrc, varName, offset);
 	}
 
 	@Override

@@ -18,5 +18,7 @@ public class AstTypeId extends AstType{
         }
         return t;
     }
+
+    public String toString() { return "id"; }
     
 }
