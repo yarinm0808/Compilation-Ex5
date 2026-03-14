@@ -66,29 +66,22 @@ public class AstExpVarSimple extends AstExpVar {
     @Override
     public Temp irMe() {
         Temp t = TempFactory.getInstance().getFreshTemp();
-        
-        // [3] Use the PERSISTENT entry saved during semantics.
-        // We do NOT call SymbolTable.findEntry here because the 
-        // local scope may have already been closed.
-        if (this.entry == null) {
-            throw new RuntimeException("Internal Error: Variable " + name + " has no linked SymbolTableEntry.");
+        int finalOffset;
+
+        if (this.entry.scopeLevel == 0) {
+            Ir.getInstance().AddIrCommand(new IrCommandLoad(t, name, 0));
+            return t;
         }
 
-        // [4] Check if it's Global (Level 0) or Local/Param (Level > 0)
-        if (this.entry.scopeLevel > 0) {
-            /**************************************************/
-            /* LOCAL/PARAM: Use stack offset                  */
-            /**************************************************/
-            // MIPS logic: lw $tX, offset($sp)
-            Ir.getInstance().AddIrCommand(new IrCommandLoad(t, null, this.entry.offset));
+        if (this.entry.isParameter) {
+            finalOffset = this.entry.offset;
         } else {
-            /**************************************************/
-            /* GLOBAL: Use name                               */
-            /**************************************************/
-            // MIPS logic: lw $tX, global_name
-            Ir.getInstance().AddIrCommand(new IrCommandLoad(t, name, 0));
+            // -44 is the base for locals (after 40 bytes of regs + 8 bytes of FP/RA)
+            finalOffset = -44 - (this.entry.offset * 4);
         }
-        
+
+        System.out.println("[DEBUG] Load Variable: " + name + " from offset: " + finalOffset);
+        Ir.getInstance().AddIrCommand(new IrCommandLoad(t, null, finalOffset));
         return t;
     }
 }

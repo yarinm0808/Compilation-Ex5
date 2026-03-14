@@ -8,10 +8,14 @@ import mips.MipsGenerator;
 import temp.Temp;
 
 public class IrCommandPrologue extends IrCommand{
-    
+	
+	public int localStackSize;
+    public IrCommandPrologue(int localStackSize) {
+        this.localStackSize = localStackSize;
+    }
     @Override
     public void mipsMe(Map<Temp, String> regMap) {
-        MipsGenerator.getInstance().prologue();
+        MipsGenerator.getInstance().prologue(this.localStackSize);
     }
     @Override
 	public List<Temp> GetUsedTemps() {

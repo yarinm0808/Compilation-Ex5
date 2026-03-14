@@ -21,10 +21,10 @@ public class IrCommandBinopSubIntegers  extends IrCommand{
     public Temp t2;
     public Temp dst;
 
-    public IrCommandBinopSubIntegers(Temp t1, Temp t2, Temp dst){
+    public IrCommandBinopSubIntegers(Temp dst, Temp t1, Temp t2) {
+        this.dst = dst;
         this.t1 = t1;
         this.t2 = t2;
-        this.dst = dst;
     }
 
 	public void mipsMe(java.util.Map<Temp, String> regMap)

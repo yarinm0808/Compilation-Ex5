@@ -80,35 +80,26 @@ public class AstStmtAssign extends AstStmt
 		return null;
 	}
 
-	public Temp irMe(){
-        // 1. Evaluate the expression to get the value we want to store
-        Temp src = exp.irMe();
+	public Temp irMe() {
+		Temp src = exp.irMe();
 
-        // 2. We need to handle 'var'. If it's a simple variable:
-        if (var instanceof AstExpVarSimple)
-        {
-            String name = ((AstExpVarSimple) var).name;
-            
-            // Look up the metadata for this variable
-            SymbolTableEntry entry = SymbolTable.getInstance().findEntry(name);
+		if (var instanceof AstExpVarSimple) {
+			String name = ((AstExpVarSimple) var).name;
+			SymbolTableEntry entry = SymbolTable.getInstance().findEntry(name);
 
-            if (entry != null && entry.offset != 0)
-            {
-                // LOCAL/PARAM: varName is null, we use the offset
-                Ir.getInstance().AddIrCommand(new IrCommandStore(null, src, entry.offset));
-            }
-            else
-            {
-                // GLOBAL: use the varName, offset is 0
-                Ir.getInstance().AddIrCommand(new IrCommandStore(name, src, 0));
-            }
-        }
-        else
-        {
-            // Handle array access or field access here later if needed
-            // For now, simple variables are fixed!
-        }
-
-        return null;
-    }
+			if (entry.scopeLevel == 0) {
+				Ir.getInstance().AddIrCommand(new IrCommandStore(name, src, 0));
+			} else {
+				int finalOffset;
+				if (entry.isParameter) {
+					finalOffset = entry.offset;
+				} else {
+					finalOffset = -44 - (entry.offset * 4);
+				}
+				System.out.println("[DEBUG] Store Variable: " + name + " at offset: " + finalOffset);
+				Ir.getInstance().AddIrCommand(new IrCommandStore(null, src, finalOffset));
+			}
+		}
+		return null;
+	}
 }

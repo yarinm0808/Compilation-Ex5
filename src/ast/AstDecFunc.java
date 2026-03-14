@@ -123,35 +123,60 @@ public class AstDecFunc extends AstDec
 		return null;		
 	}
 
+	
 	public Temp irMe() {
 		String entryLabel = "func_" + name;
 		String exitLabel  = "end_" + name;
 
 		ControlFlowContext.getInstance().setCurrentFunctionEndLabel(exitLabel);
-		System.out.println("[DEBUG] Creating IR Label Command for: " + entryLabel);
 
-		Ir.getInstance().AddIrCommand(new IrCommandLabel(entryLabel));
-		Ir.getInstance().AddIrCommand(new IrCommandPrologue());
-
-		// [1] Assigning offsets to params (Starting at 44)
+		// [1] Setup Parameters (Positive Offsets)
 		int currentParamOffset = 8; 
 		for (AstTypeNameList it = params; it != null; it = it.tail) {
 			it.head.entry.setOffset(currentParamOffset);
+			it.head.entry.isParameter = true; // IMPORTANT
+			System.out.println("[DEBUG] Param: " + it.head.name + " marked at +" + currentParamOffset);
 			currentParamOffset += 4;
 		}
 
-		// [2] Reset the Local Variable Counter
-		// We start local variables at offset 0 (relative to the frame, handled by your Prologue)
-		// or a specific offset based on how you save registers.
-		// If your prologue handles $fp, locals usually start at -4, -8, etc. 
-		// For simplicity, let's use positive offsets starting at 0:
+		// [2] Reset Local Counter
 		StackOffsetManager.getInstance().reset(0); 
+
+		// [3] Buffer Body Commands
+		Ir globalIr = Ir.getInstance();
+		IrCommand realHead = globalIr.head;
+		IrCommandList realTail = globalIr.tail;
+		globalIr.head = null;
+		globalIr.tail = null;
 
 		if (body != null) body.irMe();
 
-		Ir.getInstance().AddIrCommand(new IrCommandLabel(exitLabel));
-		Ir.getInstance().AddIrCommand(new IrCommandEpilogue());
-		Ir.getInstance().AddIrCommand(new IrCommandJumpToRa());
+		IrCommand bodyHead = globalIr.head;
+		IrCommandList bodyTail = globalIr.tail;
+		globalIr.head = realHead;
+		globalIr.tail = realTail;
+
+		// [4] Final Measurement
+		int totalLocals = StackOffsetManager.getInstance().getCount();
+		int bytesNeeded = totalLocals * 4;
+		System.out.println("[DEBUG] Function " + name + " stack space for locals: " + bytesNeeded);
+
+		// [5] Final Sequence
+		globalIr.AddIrCommand(new IrCommandLabel(entryLabel));
+		globalIr.AddIrCommand(new IrCommandPrologue(bytesNeeded));
+		
+		if (bodyHead != null) {
+			globalIr.AddIrCommand(bodyHead);
+			IrCommandList curr = bodyTail;
+			while (curr != null) {
+				globalIr.AddIrCommand(curr.head);
+				curr = curr.tail;
+			}
+		}
+
+		globalIr.AddIrCommand(new IrCommandLabel(exitLabel));
+		globalIr.AddIrCommand(new IrCommandEpilogue(bytesNeeded));
+		globalIr.AddIrCommand(new IrCommandJumpToRa());
 
 		return null;
 	}

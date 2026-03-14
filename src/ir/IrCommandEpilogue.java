@@ -8,9 +8,14 @@ import mips.MipsGenerator;
 import temp.Temp;
 
 public class IrCommandEpilogue extends IrCommand{
+	public int bytesNeeded;
+	public IrCommandEpilogue(int bytesNeeded){
+		this.bytesNeeded = bytesNeeded;
+	}
+
     @Override
     public void mipsMe(Map<Temp, String> regMap) {
-        MipsGenerator.getInstance().epilogue();
+        MipsGenerator.getInstance().epilogue(this.bytesNeeded);
     }
     @Override
 	public List<Temp> GetUsedTemps() {

@@ -5,79 +5,61 @@ import symboltable.*;
 
 public class AstDecClass extends AstDec
 {
-	/********/
-	/* NAME */
-	/********/
-	public String name;
+    public String name;
+    public String father;
+    public AstDecList dataMembers; // Changed from AstTypeNameList
 
-	/****************/
-	/* DATA MEMBERS */
-	/****************/
-	public AstTypeNameList dataMembers;
-	
-	/******************/
-	/* CONSTRUCTOR(S) */
-	/******************/
-	public AstDecClass(String name, AstTypeNameList dataMembers)
-	{
-		/******************************/
-		/* SET A UNIQUE SERIAL NUMBER */
-		/******************************/
-		serialNumber = AstNodeSerialNumber.getFresh();
-	
-		this.name = name;
-		this.dataMembers = dataMembers;
-	}
+    // Constructor for class with fields
+    public AstDecClass(String name, AstDecList dataMembers)
+    {
+        serialNumber = AstNodeSerialNumber.getFresh();
+        this.name = name;
+        this.dataMembers = dataMembers;
+        this.father = null;
+    }
 
-	/*********************************************************/
-	/* The printing message for a class declaration AST node */
-	/*********************************************************/
-	public void printMe()
-	{
-		/*************************************/
-		/* RECURSIVELY PRINT HEAD + TAIL ... */
-		/*************************************/
-		System.out.format("CLASS DEC = %s\n",name);
-		if (dataMembers != null) dataMembers.printMe();
-		
-		/***************************************/
-		/* PRINT Node to AST GRAPHVIZ DOT file */
-		/***************************************/
-		AstGraphviz.getInstance().logNode(
+    // Constructor for inheritance (if you use it)
+    public AstDecClass(String name, String father, AstDecList dataMembers)
+    {
+        serialNumber = AstNodeSerialNumber.getFresh();
+        this.name = name;
+        this.father = father;
+        this.dataMembers = dataMembers;
+    }
+
+    public void printMe()
+    {
+        System.out.format("CLASS DEC = %s\n", name);
+        
+        // 1. Recursive print
+        if (dataMembers != null) dataMembers.printMe();
+        
+        // 2. Log this node
+        AstGraphviz.getInstance().logNode(
                 serialNumber,
-			String.format("CLASS\n%s",name));
-		
-		/****************************************/
-		/* PRINT Edges to AST GRAPHVIZ DOT file */
-		/****************************************/
-		AstGraphviz.getInstance().logEdge(serialNumber, dataMembers.serialNumber);
-	}
-	
-	public Type semantMe()
-	{	
-		/*************************/
-		/* [1] Begin Class Scope */
-		/*************************/
+                String.format("CLASS\n%s", name));
+        
+        // 3. Log edge ONLY if dataMembers isn't null
+        if (dataMembers != null) {
+            AstGraphviz.getInstance().logEdge(serialNumber, dataMembers.serialNumber);
+        }
+    }
+
+    public Type semantMe(){   
 		SymbolTable.getInstance().beginScope();
+		
+		TypeList dataMembersType = null; // Use TypeList here
+		if (dataMembers != null) {
+			// Cast the Type returned by semantMe() to TypeList
+			dataMembersType = (TypeList) dataMembers.semantMe();
+		}
 
-		/***************************/
-		/* [2] Semant Data Members */
-		/***************************/
-		TypeClass t = new TypeClass(null,name, dataMembers.semantMe());
+		// Now the types match for the TypeClass constructor
+		TypeClass t = new TypeClass(null, name, dataMembersType);
 
-		/*****************/
-		/* [3] End Scope */
-		/*****************/
 		SymbolTable.getInstance().endScope();
+		SymbolTable.getInstance().enter(name, t);
 
-		/************************************************/
-		/* [4] Enter the Class Type to the Symbol Table */
-		/************************************************/
-		SymbolTable.getInstance().enter(name,t);
-
-		/*********************************************************/
-		/* [5] Return value is irrelevant for class declarations */
-		/*********************************************************/
-		return null;		
+		return null;        
 	}
 }

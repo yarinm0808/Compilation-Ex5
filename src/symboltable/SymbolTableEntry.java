@@ -14,7 +14,8 @@ public class SymbolTableEntry
     public int offset; 
     
     // NEW: Added scopeLevel to distinguish Global (0) from Local (>0)
-    public int scopeLevel; 
+    public int scopeLevel;
+    public boolean isParameter; 
 
     public SymbolTableEntry(
         String name,
@@ -34,8 +35,12 @@ public class SymbolTableEntry
         this.prevtopIndex = prevtopIndex;
         this.lineNumber = lineNumber;
         this.scopeLevel = scopeLevel; // Initialize the level
+        this.isParameter = false;
     }
 
+    public void markAsParameter() {
+        this.isParameter = true;
+    }
     public void setOffset(int offset) {
         this.offset = offset;
     }

@@ -148,16 +148,14 @@ cFieldList ::= cField:f cFieldList:l {: RESULT = new AstDecList(f, l); :}
 
 classDec ::= CLASS:c ID:name LBRACE cFieldList:fields RBRACE 
              {: 
-                // Error 1 fix: Ensure the second argument is an AstTypeNameList.
-                // If fields is AstDecList, we might need a specific conversion 
-                // or to change the non-terminal type of cFieldList.
-                RESULT = new AstDecClass(name, null); 
+                // Pass the 'fields' (AstDecList) instead of null
+                RESULT = new AstDecClass(name, fields); 
                 RESULT.lineNumber = cleft; 
              :}
            | CLASS:c ID:name EXTENDS ID:superName LBRACE cFieldList:fields RBRACE
              {: 
-                // Error 2 fix: superName must be wrapped in an AstTypeName object
-                RESULT = new AstDecClass(name, new AstTypeNameList(new AstTypeName(null, superName), null)); 
+                // Pass the 'fields' (AstDecList) and the superclass info
+                RESULT = new AstDecClass(name, fields, superName); 
                 RESULT.lineNumber = cleft; 
              :};
 
@@ -196,7 +194,8 @@ stmt ::= varDec:v
 
 exp ::= INT:i                       {: RESULT = new AstExpInt(i);           RESULT.lineNumber = ileft; :}
       | MINUS:m INT:i               {: RESULT = new AstExpInt(-i);          RESULT.lineNumber = mleft; :}
-      | STRING:s                   {: RESULT = new AstExpString(s);        RESULT.lineNumber = sleft; :}
+      | STRING:s                    {: RESULT = new AstExpString(s);        RESULT.lineNumber = sleft; :}
+      | NIL:n                       {: RESULT = new AstExpNil();            RESULT.lineNumber = nleft; :}
       | var:v                       {: RESULT = v;                          :} 
       | callExp:c                   {: RESULT = c;                          :}
       | newExp:ne                   {: RESULT = ne;                         :}

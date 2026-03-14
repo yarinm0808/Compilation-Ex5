@@ -93,9 +93,9 @@ public class MipsGenerator
 	}
 	public void store(String srcReg, String varName, int offset) {
 		if (varName == null || "null".equals(varName)) {
-			// -44 is the start of local space relative to FP in the reference
-			int fpOffset = -44 - offset; 
-			fileWriter.format("\tsw %s, %d($fp)\n", srcReg, fpOffset);
+			// Just use the offset directly. 
+			// If the AST sent -44, we print -44.
+			fileWriter.format("\tsw %s, %d($fp)\n", srcReg, offset);
 		} else {
 			fileWriter.format("\tsw %s, %s\n", srcReg, varName);
 		}
@@ -103,10 +103,8 @@ public class MipsGenerator
 
 	public void load(String destReg, String varName, int offset) {
 		if (varName == null || "null".equals(varName)) {
-			// If offset is positive (>=8), it's a parameter. 
-			// If offset is 0, it's a local (needs -44).
-			int finalOffset = (offset >= 8) ? offset : (-44 - offset);
-			fileWriter.format("\tlw %s, %d($fp)\n", destReg, finalOffset);
+			// Just use the offset directly.
+			fileWriter.format("\tlw %s, %d($fp)\n", destReg, offset);
 		} else {
 			fileWriter.format("\tlw %s, %s\n", destReg, varName);
 		}
@@ -145,32 +143,37 @@ public class MipsGenerator
 		fileWriter.format("\tmove %s, $v0\n", targetReg);
 	}
 
-	public void prologue() {
+	public void prologue(int localStackSize) {
 		fileWriter.format("\tsubu $sp, $sp, 4\n");
 		fileWriter.format("\tsw $ra, 0($sp)\n");
 		fileWriter.format("\tsubu $sp, $sp, 4\n");
 		fileWriter.format("\tsw $fp, 0($sp)\n");
 		fileWriter.format("\tmove $fp, $sp\n");
 		
-		// Save registers $t0-$t9 (40 bytes)
 		for (int i = 0; i <= 9; i++) {
 			fileWriter.format("\tsubu $sp, $sp, 4\n");
 			fileWriter.format("\tsw $t%d, 0($sp)\n", i);
 		}
 		
-		// Allocate space for locals (e.g., 16 bytes for 4 locals)
-		fileWriter.format("\tsubu $sp, $sp, 16\n");
+		// Use the dynamic size calculated by the AST!
+		fileWriter.format("\tsubu $sp, $sp, %d\n", localStackSize);
 	}
 
-	public void epilogue() {
-		fileWriter.format("\tmove $sp, $fp\n");
-		// Restore registers using negative offsets from the frame pointer
+	public void epilogue(int bytesNeeded) {
+		// 1. Reset SP to the base of the frame
+		fileWriter.println("\tmove $sp, $fp");
+
+		// 2. Restore $t0-$t9 (They were saved at -4, -8 ... -40 relative to the OLD SP)
+		// But since we moved SP to FP, and FP was at -4 relative to the start...
+		// The simplest way is to use the offsets from the current $sp (which is $fp)
 		for (int i = 0; i <= 9; i++) {
-			fileWriter.format("\tlw $t%d, %d($sp)\n", i, -(i + 1) * 4);
+			fileWriter.format("\tlw $t%d, %d($sp)\n", i, -(i * 4 + 4));
 		}
-		fileWriter.format("\tlw $fp, 0($sp)\n");
-		fileWriter.format("\tlw $ra, 4($sp)\n");
-		fileWriter.format("\taddu $sp, $sp, 8\n"); // Clean up RA and FP space
+
+		// 3. Restore FP and RA
+		fileWriter.println("\tlw $fp, 0($sp)");
+		fileWriter.println("\tlw $ra, 4($sp)");
+		fileWriter.println("\taddu $sp, $sp, 8");
 	}
 
 	public void add(String dst, String oprnd1, String oprnd2)
@@ -181,16 +184,16 @@ public class MipsGenerator
 		fileWriter.format("\taddu %s,%s,%s\n", dst, oprnd1, oprnd2);
 		
 		// Check upper bound: 32767 
-		fileWriter.format("\tli $at, 32767\n");
-		fileWriter.format("\tble %s, $at, %s\n", dst, upperCheck);
-		fileWriter.format("\tmove %s, $at\n", dst);
+		fileWriter.format("\tli $s0, 32767\n");
+		fileWriter.format("\tble %s, $s0, %s\n", dst, upperCheck);
+		fileWriter.format("\tmove %s, $s0\n", dst);
 		fileWriter.format("\tj %s\n", done);
 
 		fileWriter.format("%s:\n", upperCheck);
 		// Check lower bound: -32768 
-		fileWriter.format("\tli $at, -32768\n");
-		fileWriter.format("\tbge %s, $at, %s\n", dst, done);
-		fileWriter.format("\tmove %s, $at\n", dst);
+		fileWriter.format("\tli $s0, -32768\n");
+		fileWriter.format("\tbge %s, $s0, %s\n", dst, done);
+		fileWriter.format("\tmove %s, $s0\n", dst);
 
 		fileWriter.format("%s:\n", done);
 	}
@@ -199,24 +202,29 @@ public class MipsGenerator
     	fileWriter.format("\t%s\n", command);
 	}
 
-	public void sub(String dstidx, String i1, String i2){
+	public void sub(String dst, String oprnd1, String oprnd2) {
+		System.out.println(String.format("[DEBUG] Generating SUB: %s = %s - %s", dst, oprnd1, oprnd2));
+		String upperCheck = "label_sub_upper_" + AstNodeSerialNumber.getFresh();
+		String done = "label_sub_done_" + AstNodeSerialNumber.getFresh();
 
-		String label_upper_check = "label_sub_upper_" + AstNodeSerialNumber.getFresh();
-    	String label_done = "label_sub_done_" + AstNodeSerialNumber.getFresh();
+		// 1. Perform Subtraction: dst = oprnd1 - oprnd2
+		fileWriter.format("\tsubu %s, %s, %s\n", dst, oprnd1, oprnd2);
+		
+		// 2. Saturation: Check Upper Bound (32767) 
+		fileWriter.format("\tli $v1, 32767\n"); 
+		fileWriter.format("\tble %s, $v1, %s\n", dst, upperCheck);
+		fileWriter.format("\tmove %s, $v1\n", dst);
+		fileWriter.format("\tj %s\n", done);
 
-		fileWriter.format("\tsubu %s,%s,%s\n",dstidx,i1,i2);
-		fileWriter.format("\tli $at, 32767\n");
-		fileWriter.format("\tble %s, $at, %s\n",dstidx, label_upper_check);
-		fileWriter.format("\tmove %s, $at\n", dstidx);
-		fileWriter.format("\tj %s", label_done);
+		// 3. Saturation: Check Lower Bound (-32768) 
+		fileWriter.format("%s:\n", upperCheck);
+		fileWriter.format("\tli $v1, -32768\n");
+		// If dst >= -32768, we are within range, jump to done
+		fileWriter.format("\tbge %s, $v1, %s\n", dst, done);
+		// Otherwise, clamp to -32768
+		fileWriter.format("\tmove %s, $v1\n", dst);
 
-		fileWriter.format("%s:\n",label_upper_check);
-
-		fileWriter.format("\tli $at, -32768\n");
-		fileWriter.format("\tbge %s, $at, %s\n",dstidx, label_upper_check);
-		fileWriter.format("\tmove %s, $at\n", dstidx);
-		fileWriter.format("\tj %s", label_done);
-		fileWriter.format("%s:\n",label_done);
+		fileWriter.format("%s:\n", done);
 	}
 	
 	public void mul(String dstidx, String i1, String i2)
@@ -229,15 +237,15 @@ public class MipsGenerator
 
 		// 2. Upper Bound Check (32767)
 		fileWriter.format("\tli $at, 32767\n");
-		fileWriter.format("\tble %s, $at, %s\n", dstidx, label_upper_check);
-		fileWriter.format("\tmove %s, $at\n", dstidx);
+		fileWriter.format("\tble %s, $s0, %s\n", dstidx, label_upper_check);
+		fileWriter.format("\tmove %s, $s0\n", dstidx);
 		fileWriter.format("\tj %s\n", label_done); 
 
 		// 3. Lower Bound Check (-32768)
 		fileWriter.format("%s:\n", label_upper_check);
-		fileWriter.format("\tli $at, -32768\n"); // Corrected to -32768
-		fileWriter.format("\tbge %s, $at, %s\n", dstidx, label_done); // Jump to done
-		fileWriter.format("\tmove %s, $at\n", dstidx);
+		fileWriter.format("\tli $s0, -32768\n"); // Corrected to -32768
+		fileWriter.format("\tbge %s, $s0, %s\n", dstidx, label_done); // Jump to done
+		fileWriter.format("\tmove %s, $s0\n", dstidx);
 
 		fileWriter.format("%s:\n", label_done);
 	}
@@ -253,16 +261,16 @@ public class MipsGenerator
 
 		// 2. Saturation: Check Upper Bound (32767)
 		// This handles the specific case of -32768 / -1
-		fileWriter.format("\tli $at, 32767\n");
-		fileWriter.format("\tble %s, $at, %s\n", d, label_upper_check);
-		fileWriter.format("\tmove %s, $at\n", d);
+		fileWriter.format("\tli $s0, 32767\n");
+		fileWriter.format("\tble %s, $s0, %s\n", d, label_upper_check);
+		fileWriter.format("\tmove %s, $s0\n", d);
 		fileWriter.format("\tj %s\n", label_done);
 
 		// 3. Saturation: Check Lower Bound (-32768)
 		fileWriter.format("%s:\n", label_upper_check);
-		fileWriter.format("\tli $at, -32768\n");
-		fileWriter.format("\tbge %s, $at, %s\n", d, label_done);
-		fileWriter.format("\tmove %s, $at\n", d);
+		fileWriter.format("\tli $s0, -32768\n");
+		fileWriter.format("\tbge %s, $s0, %s\n", d, label_done);
+		fileWriter.format("\tmove %s, $s0\n", d);
 
 		fileWriter.format("%s:\n", label_done);
 	}
@@ -397,6 +405,7 @@ public class MipsGenerator
 	}	
 	public void setPrintWriter(PrintWriter pw) {
 		this.fileWriter = pw;
+		fileWriter.print(".globl main\n");
 		fileWriter.print(".data\n");
 		fileWriter.print("string_access_violation: .asciiz \"Access Violation\\n\"\n");
 		fileWriter.print("string_illegal_div_by_0: .asciiz \"Illegal Division By Zero\\n\"\n");

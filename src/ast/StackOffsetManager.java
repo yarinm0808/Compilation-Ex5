@@ -21,7 +21,11 @@ public class StackOffsetManager {
     // Call this in AstDecVar.irMe() for local variables
     public int getNextOffset() {
         int res = currentOffset;
-        currentOffset += 4; // Increment by 4 to stay word-aligned
+        currentOffset += 1; // Increment by 1 to stay word-aligned
         return res;
+    }
+
+    public int getCount(){
+        return currentOffset;
     }
 }

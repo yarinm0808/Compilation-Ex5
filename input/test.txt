@@ -1,6 +1,11 @@
+class Person {
+    int age;
+}
+
 void main() {
-    int x := 30000;
-    int y := 5000;
-    int z := x + y;
-    PrintInt(z);
+    /* 1. Test Class Field Dereference */
+    Person p := nil;
+    
+    /* This line should trigger: Invalid Pointer Dereference */
+    PrintInt(p.age); 
 }

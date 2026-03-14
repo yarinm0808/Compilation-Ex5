@@ -54,9 +54,7 @@ public class AstExpCall extends AstExp
         // Case 1: Special Library Function (PrintInt/PrintString)
         if (funcName.equals("PrintInt")) {
             Temp argTemp = params.head.irMe();
-            Ir.getInstance().AddIrCommand(new IrCommandMoveToA0(argTemp)); 
-            // Use your new simple call command
-            Ir.getInstance().AddIrCommand(new IrCommandCall("func_PrintInt"));
+            Ir.getInstance().AddIrCommand(new IrCommandPrintInt(argTemp)); 
             return null; 
         }
         else{

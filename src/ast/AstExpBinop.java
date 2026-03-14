@@ -45,7 +45,9 @@ public class AstExpBinop extends AstExp
 		/*********************************/
 		if (op == 0) {sop = "+";}
 		if (op == 1) {sop = "-";}
-		if (op == 3) {sop = "=";}
+		if (op == 2) {sop = "*";}
+		if (op == 3) {sop = "/";}
+		if (op == 6) {sop = "=";}
 
 		/**********************************/
 		/* AST NODE TYPE = AST BINOP EXP */
@@ -100,29 +102,39 @@ public class AstExpBinop extends AstExp
 
 		if (op == 0)
 		{
+			System.out.println("[DEBUG] op:" + op +" bin operation is ADD");
 			Ir.
 					getInstance().
 					AddIrCommand(new IrCommandBinopAddIntegers(dst,t1,t2));
 		}
+		if(op == 1){
+			System.out.println("[DEBUG] op:" + op +" bin operation is SUB");
+			Ir. 	
+					getInstance().
+					AddIrCommand(new IrCommandBinopSubIntegers(dst, t1, t2));
+		}
 		if (op == 2)
 		{
+			System.out.println("[DEBUG] op:" + op +" bin operation is MUL");
 			Ir.
 					getInstance().
 					AddIrCommand(new IrCommandBinopMulIntegers(dst,t1,t2));
 		}
 		if (op == 3)
-		{
+    	{
+			System.out.println("[DEBUG] op:" + op +" bin operation is DIV");
+        	// For integers, it's a value comparison. 
+        	// For Classes/Arrays, it should be an address comparison[cite: 24, 27].
 			Ir.getInstance().AddIrCommand(new IrCommand_Check_Division_By_Zero(t2));
+        	Ir.getInstance().AddIrCommand(new IrCommandBinopDivIntegers(dst, t1, t2));
+    	}
+		if (op == 6)
+		{
+			System.out.println("[DEBUG] op:" + op +" bin operation is EQ");
 			Ir.
 					getInstance().
 					AddIrCommand(new IrCommandBinopEqIntegers(dst,t1,t2));
 		}
-		if (op == 6)
-    	{
-        	// For integers, it's a value comparison. 
-        	// For Classes/Arrays, it should be an address comparison[cite: 24, 27].
-        	Ir.getInstance().AddIrCommand(new IrCommandBinopEqIntegers(dst, t1, t2));
-    	}
 		return dst;
 	}
 
