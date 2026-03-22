@@ -148,6 +148,20 @@ public class SymbolTable
         // Existing print logic...
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("--- Current Symbol Table ---\n");
+        SymbolTableEntry e = top;
+        while (e != null) {
+            sb.append(String.format("Name: %-15s | Type: %-10s | Scope: %d\n", 
+                e.name, e.type.getClass().getSimpleName(), e.scopeLevel));
+            e = e.prevtop;
+        }
+        sb.append("----------------------------");
+        return sb.toString();
+    }
+
     /**************************************/
     /* USUAL SINGLETON IMPLEMENTATION ... */
     /**************************************/

@@ -52,6 +52,7 @@ public class AstDecVar extends AstDec {
     public Type semantMe() {
         // 1. Resolve the type
         Type t = type.semantMe();
+        System.out.println(">> [DEBUG] Declaring var: " + name + " of type: " + (t != null ? t.getClass().getSimpleName() : "NULL"));
 
         // 2. Collision Check in current scope
         if (SymbolTable.getInstance().findInCurrentScope(name) != null) {
@@ -76,45 +77,62 @@ public class AstDecVar extends AstDec {
     /***************************/
     @Override
     public Temp irMe() {
+        /****************************************************************/
+        /* 1. RE-REGISTER in the Symbol Table                           */
+        /* This is CRITICAL. Since the Semantic Pass cleared the table, */
+        /* we must put the variable back so IR nodes can find it.      */
+        /****************************************************************/
+        SymbolTable.getInstance().enter(name, this.entry.type);
+
+        /****************************************************************/
+        /* 2. HANDLE ALLOCATION (GLOBAL VS LOCAL)                       */
+        /****************************************************************/
         if (this.entry.scopeLevel == 0) {
             // --- GLOBAL VARIABLE ---
-            if (type.semantMe() instanceof TypeString && initialValue instanceof AstExpString) {
-                String strVal = ((AstExpString)initialValue).value;
+            // Allocation in the .data segment
+            if (this.entry.type instanceof TypeString && initialValue instanceof AstExpString) {
+                String strVal = ((AstExpString) initialValue).value;
                 Ir.getInstance().AddIrCommand(new IrCommandAllocateString(name, strVal));
             } else {
                 Ir.getInstance().AddIrCommand(new IrCommandAllocate(name));
             }
         } else {
             // --- LOCAL VARIABLE ---
-            // 1. Get the raw index (0, 1, 2...) from the manager
+            // 1. Get the raw index from your offset manager
             int localIndex = StackOffsetManager.getInstance().getNextOffset();
-            this.entry.setOffset(localIndex);
             
-            // 2. Mark it as NOT a parameter explicitly (safety)
+            // 2. Save it back into the entry so we can find it later
+            this.entry.setOffset(localIndex);
             this.entry.isParameter = false; 
         }
 
-        // Handle Assignment/Initialization logic
+        /****************************************************************/
+        /* 3. HANDLE INITIALIZATION (ASSIGNMENT)                        */
+        /****************************************************************/
         if (initialValue != null) {
-            // If it's a global string literal, we already handled allocation/init.
-            // For locals or global ints, we need to generate the Store command.
-            if (this.entry.scopeLevel == 0 && type.semantMe() instanceof TypeString && initialValue instanceof AstExpString) {
+            // Skip re-storing global strings (they are initialized at allocation)
+            if (this.entry.scopeLevel == 0 && 
+                this.entry.type instanceof TypeString && 
+                initialValue instanceof AstExpString) {
                 return null; 
             }
 
+            // Generate IR for the right-hand side expression
             Temp val = initialValue.irMe();
             
             if (this.entry.scopeLevel > 0) {
-                // Calculate the actual MIPS stack offset: -44, -48, -52...
+                // Calculate the actual MIPS stack offset (e.g., -44, -48...)
+                // Note: Ensure this formula matches your stack frame layout!
                 int finalStackOffset = -44 - (this.entry.offset * 4);
                 
-                // Store the value into the local stack slot
+                // Generate a STORE command to the stack slot
                 Ir.getInstance().AddIrCommand(new IrCommandStore(null, val, finalStackOffset));
             } else {
-                // Global store (using variable name label)
+                // Global store: use the variable name as the label
                 Ir.getInstance().AddIrCommand(new IrCommandStore(name, val, 0));
             }
         }
+
         return null;
     }
 }

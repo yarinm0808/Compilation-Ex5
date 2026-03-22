@@ -1,6 +1,6 @@
 package types;
 
-public class TypeClassVarDec
+public class TypeClassVarDec extends Type
 {
 	public Type t;
 	public String name;

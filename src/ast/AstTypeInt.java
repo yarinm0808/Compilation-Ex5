@@ -12,5 +12,7 @@ public class AstTypeInt extends AstType{
     }
 
     public String toString() { return "int"; }
-    
+    public String getTypeName(){
+        return "int";
+    }
 }

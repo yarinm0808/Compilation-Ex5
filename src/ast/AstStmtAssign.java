@@ -81,25 +81,40 @@ public class AstStmtAssign extends AstStmt
 	}
 
 	public Temp irMe() {
+		// 1. Generate the value we want to store (e.g., the number 5)
 		Temp src = exp.irMe();
 
 		if (var instanceof AstExpVarSimple) {
+			// --- EXISTING LOGIC FOR LOCAL/GLOBAL VARS ---
 			String name = ((AstExpVarSimple) var).name;
 			SymbolTableEntry entry = SymbolTable.getInstance().findEntry(name);
 
 			if (entry.scopeLevel == 0) {
 				Ir.getInstance().AddIrCommand(new IrCommandStore(name, src, 0));
 			} else {
-				int finalOffset;
-				if (entry.isParameter) {
-					finalOffset = entry.offset;
-				} else {
-					finalOffset = -44 - (entry.offset * 4);
-				}
-				System.out.println("[DEBUG] Store Variable: " + name + " at offset: " + finalOffset);
+				int finalOffset = (entry.isParameter) ? entry.offset : -44 - (entry.offset * 4);
 				Ir.getInstance().AddIrCommand(new IrCommandStore(null, src, finalOffset));
 			}
+		} 
+		else if (var instanceof AstExpVarField) {
+			// --- NEW LOGIC FOR CLASS FIELDS (p.age := 5) ---
+			AstExpVarField fieldVar = (AstExpVarField) var;
+
+			// 1. Get the address of the object (e.g., load the pointer 'p' from the stack)
+			Temp baseAddr = fieldVar.var.irMe();
+
+			// 2. Add Null Pointer Check (Mandatory!)
+			Ir.getInstance().AddIrCommand(new IrCommand_Check_Null_Ptr(baseAddr));
+
+			// 3. Find the offset of the field 'age' within the class
+			TypeClass tc = (TypeClass) fieldVar.var.semantMe();
+			int offset = tc.findFieldOffset(fieldVar.fieldName);
+
+			// 4. Generate the STORE command to the heap
+			// This generates: sw $src, offset($baseAddr)
+			Ir.getInstance().AddIrCommand(new IrCommandStoreField(baseAddr, offset, src));
 		}
+		
 		return null;
 	}
 }

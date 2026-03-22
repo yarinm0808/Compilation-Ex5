@@ -1,0 +1,135 @@
+digraph
+{
+graph [ordering = "out"]
+v1 [label = "VAR
+DEC(age)"];
+v1 -> v0;
+v2 [label = "DEC
+LIST
+"];
+v2 -> v1;
+v3 [label = "CLASS
+Person"];
+v3 -> v2;
+v7 [label = "NEW
+CLASS"];
+v7 -> v6;
+v8 [label = "VAR
+DEC(p)"];
+v8 -> v5;
+v8 -> v7;
+v9 [label = "STMT
+DEC
+VAR"];
+v9 -> v8;
+v10 [label = "VAR
+SIMPLE(p)"];
+v11 [label = "FIELD
+VAR
+___.age"];
+v11 -> v10;
+v12 [label = "INT(5)"];
+v13 [label = "ASSIGN
+left := right
+"];
+v13 -> v11;
+v13 -> v12;
+v14 [label = "VAR
+SIMPLE(p)"];
+v15 [label = "FIELD
+VAR
+___.age"];
+v15 -> v14;
+v16 [label = "EXP
+LIST
+"];
+v16 -> v15;
+v17 [label = "CALL(PrintInt)
+WITH"];
+v17 -> v16;
+v18 [label = "STMT
+CALL"];
+v18 -> v17;
+v20 [label = "INT(3)"];
+v21 [label = "VAR
+DEC(a)"];
+v21 -> v19;
+v21 -> v20;
+v22 [label = "STMT
+DEC
+VAR"];
+v22 -> v21;
+v24 [label = "VAR
+SIMPLE(a)"];
+v25 [label = "VAR
+SIMPLE(p)"];
+v26 [label = "FIELD
+VAR
+___.age"];
+v26 -> v25;
+v27 [label = "BINOP(+)"];
+v27 -> v24;
+v27 -> v26;
+v28 [label = "VAR
+DEC(z)"];
+v28 -> v23;
+v28 -> v27;
+v29 [label = "STMT
+DEC
+VAR"];
+v29 -> v28;
+v30 [label = "VAR
+SIMPLE(z)"];
+v31 [label = "EXP
+LIST
+"];
+v31 -> v30;
+v32 [label = "CALL(PrintInt)
+WITH"];
+v32 -> v31;
+v33 [label = "STMT
+CALL"];
+v33 -> v32;
+v34 [label = "STMT
+LIST
+"];
+v34 -> v33;
+v35 [label = "STMT
+LIST
+"];
+v35 -> v29;
+v35 -> v34;
+v36 [label = "STMT
+LIST
+"];
+v36 -> v22;
+v36 -> v35;
+v37 [label = "STMT
+LIST
+"];
+v37 -> v18;
+v37 -> v36;
+v38 [label = "STMT
+LIST
+"];
+v38 -> v13;
+v38 -> v37;
+v39 [label = "STMT
+LIST
+"];
+v39 -> v9;
+v39 -> v38;
+v40 [label = "FUNC(main)
+:void
+"];
+v40 -> v39;
+v41 [label = "DEC
+LIST
+"];
+v41 -> v40;
+v42 [label = "DEC
+LIST
+"];
+v42 -> v3;
+v42 -> v41;
+}

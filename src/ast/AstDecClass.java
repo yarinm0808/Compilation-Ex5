@@ -45,21 +45,42 @@ public class AstDecClass extends AstDec
         }
     }
 
-    public Type semantMe(){   
-		SymbolTable.getInstance().beginScope();
-		
-		TypeList dataMembersType = null; // Use TypeList here
-		if (dataMembers != null) {
-			// Cast the Type returned by semantMe() to TypeList
-			dataMembersType = (TypeList) dataMembers.semantMe();
-		}
+    public Type semantMe() {
+        // 1. Resolve the father class if it exists (for inheritance)
+        TypeClass fatherType = null;
+        if (this.father != null) { // Changed 'superName' to 'this.father'
+            Type t = SymbolTable.getInstance().find(this.father);
+            if (t instanceof TypeClass) {
+                fatherType = (TypeClass) t;
+            } else {
+                // Optional: throw error if father isn't a class
+                throw new RuntimeException("ERROR(" + lineNumber + "): superclass " + this.father + " not found.");
+            }
+        }
 
-		// Now the types match for the TypeClass constructor
-		TypeClass t = new TypeClass(null, name, dataMembersType);
+        // 2. Initialize TypeClass: (fatherType, name, data_members)
+        TypeClass tc = new TypeClass(fatherType, name, null);
 
-		SymbolTable.getInstance().endScope();
-		SymbolTable.getInstance().enter(name, t);
+        // 3. Populate the data_members list
+        TypeList membersList = null;
+        
+        // Changed 'this.fields' to 'this.dataMembers' to match your class field
+        for (AstDecList it = this.dataMembers; it != null; it = it.tail) {
+            if (it.head instanceof AstDecVar) {
+                AstDecVar varDec = (AstDecVar) it.head;
+                Type fieldType = varDec.type.semantMe();
+                
+                // This is the bridge that fixes the "NOT FOUND" error!
+                TypeClassVarDec bridge = new TypeClassVarDec(fieldType, varDec.name);
+                membersList = new TypeList(bridge, membersList);
+            }
+            // If you handle methods, you'd add 'it.head instanceof AstDecFunc' here
+        }
 
-		return null;        
-	}
+        // 4. Attach the list and register
+        tc.data_members = membersList;
+        SymbolTable.getInstance().enter(name, tc);
+
+        return tc;
+    }
 }

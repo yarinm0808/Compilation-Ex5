@@ -6,4 +6,6 @@ public abstract class AstType extends AstNode{
     public Type semantMe(){
         return null;
     }
+
+    public abstract String getTypeName();
 }

@@ -1,11 +1,20 @@
+
 class Person {
     int age;
 }
 
 void main() {
-    /* 1. Test Class Field Dereference */
-    Person p := nil;
+    /* 1. Use the 'new' keyword correctly for a class instance */
+    /* Note: In many L implementations, classes are instantiated like this: */
+    Person p := new Person;
     
-    /* This line should trigger: Invalid Pointer Dereference */
+    /* 2. Assignment */
+    p.age := 5;
+
+    /* 3. Printing */
     PrintInt(p.age); 
+
+    int a := 3;
+    int z := a + p.age;
+    PrintInt(z);
 }

@@ -51,7 +51,7 @@ public class AstExpVarSimple extends AstExpVar {
     public Type semantMe() {
         // [1] Find the entry in the Symbol Table
         this.entry = SymbolTable.getInstance().findEntry(name);
-
+        System.out.println(SymbolTable.getInstance().toString());
         if (this.entry == null) {
             throw new RuntimeException("ERROR(" + lineNumber + "): Variable " + name + " is not defined.");
         }

@@ -148,14 +148,13 @@ cFieldList ::= cField:f cFieldList:l {: RESULT = new AstDecList(f, l); :}
 
 classDec ::= CLASS:c ID:name LBRACE cFieldList:fields RBRACE 
              {: 
-                // Pass the 'fields' (AstDecList) instead of null
                 RESULT = new AstDecClass(name, fields); 
                 RESULT.lineNumber = cleft; 
              :}
            | CLASS:c ID:name EXTENDS ID:superName LBRACE cFieldList:fields RBRACE
              {: 
-                // Pass the 'fields' (AstDecList) and the superclass info
-                RESULT = new AstDecClass(name, fields, superName); 
+                // SWAP fields and superName here:
+                RESULT = new AstDecClass(name, superName, fields); 
                 RESULT.lineNumber = cleft; 
              :};
 
@@ -216,22 +215,27 @@ var ::= ID:name                   {: RESULT = new AstExpVarSimple(name, nameleft
       | var:v LBRACK exp:e RBRACK {: RESULT = new AstExpVarSubscript(v,e); RESULT.lineNumber = v.lineNumber; :}
       ;
 
-newExp ::= NEW:n type:t LBRACK exp:e RBRACK {: RESULT = new AstNewArray(t, e, nleft); :} ;
+newExp ::= NEW:n type:t LBRACK exp:e RBRACK 
+           {: RESULT = new AstNewArray(t, e, nleft); :} 
+         | NEW:n type:t 
+           {: RESULT = new AstNewClassInstance(t, nleft); :} ; // Add this!
 
 /* For Function Call Arguments */
 callList ::= exp:e COMMA callList:l  {: RESULT = new AstExpList(e, l); :}
            | exp:e                   {: RESULT = new AstExpList(e, null); :};
 
 callExp ::= ID:name LPAREN RPAREN
-            {: RESULT = new AstExpCall(name, null); RESULT.lineNumber = nameleft; :}
+            {: RESULT = new AstExpCall(null, name, null); RESULT.lineNumber = nameleft; :}
           | ID:name LPAREN callList:args RPAREN
-            {: RESULT = new AstExpCall(name, args); RESULT.lineNumber = nameleft; :}
+            {: RESULT = new AstExpCall(null, name, args); RESULT.lineNumber = nameleft; :}
           | var:v DOT ID:name LPAREN RPAREN
             {: 
-               /* The AST doesn't support 'v.', so we treat it as a standard call for now */
-               RESULT = new AstExpCall(name, null); RESULT.lineNumber = v.lineNumber; 
+                // Fix 4: Pass 'v' as the base of the call
+                RESULT = new AstExpCall(v, name, null); RESULT.lineNumber = v.lineNumber; 
             :}
           | var:v DOT ID:name LPAREN callList:args RPAREN
             {: 
-               RESULT = new AstExpCall(name, args); RESULT.lineNumber = v.lineNumber; 
-            :};
+                // Fix 4: Pass 'v' as the base of the call
+                RESULT = new AstExpCall(v, name, args); RESULT.lineNumber = v.lineNumber; 
+            :}
+          ;

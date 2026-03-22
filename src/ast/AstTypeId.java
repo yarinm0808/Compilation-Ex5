@@ -20,5 +20,9 @@ public class AstTypeId extends AstType{
     }
 
     public String toString() { return "id"; }
+
+    public String getTypeName(){
+        return this.name;
+    };
     
 }

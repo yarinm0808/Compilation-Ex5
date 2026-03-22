@@ -32,6 +32,7 @@ public class MipsGenerator
 		fileWriter.print("\tjal func_main\n");
 		fileWriter.print("\tli $v0, 10\n");
 		fileWriter.print("\tsyscall\n");
+		fileWriter.flush(); // Force write to disk
 		fileWriter.close();
 	}
 	public void printInt(String idx)
@@ -47,6 +48,10 @@ public class MipsGenerator
 	public void moveA0(String srcReg) {
 		// This moves the value into the physical argument register
 		fileWriter.format("\tmove $a0, %s\n", srcReg);
+	}
+	public void storeField(String srcReg, String baseReg, int offset) {
+    	// Generates the correct store syntax: sw $value, offset($base)
+    	fileWriter.format("\tsw %s, %d(%s)\n", srcReg, offset, baseReg);
 	}
 	public void call(String physicalDst, String funcName, List<String> physicalArgs) {
 		// 1. Push arguments onto the stack
@@ -91,6 +96,13 @@ public class MipsGenerator
 		fileWriter.println(".text");                 // Flicker back to text
 		fileWriter.flush();
 	}
+
+	public void malloc(String addrReg, int size){
+		fileWriter.format("\tli $a0, %d\n", size);
+		fileWriter.format("\tli $v0, 9\n");
+		fileWriter.format("\tsyscall\n");
+		fileWriter.format("\t move %s, $v0\n", addrReg);
+	}
 	public void store(String srcReg, String varName, int offset) {
 		if (varName == null || "null".equals(varName)) {
 			// Just use the offset directly. 
@@ -100,12 +112,18 @@ public class MipsGenerator
 			fileWriter.format("\tsw %s, %s\n", srcReg, varName);
 		}
 	}
-
 	public void load(String destReg, String varName, int offset) {
 		if (varName == null || "null".equals(varName)) {
-			// Just use the offset directly.
+			// CASE 1: Local Stack Variable
 			fileWriter.format("\tlw %s, %d($fp)\n", destReg, offset);
-		} else {
+		} 
+		else if (varName.startsWith("$")) {
+			// CASE 2: Register-Relative (Field Access/Array Access)
+			// This generates: lw $t0, 0($t1)
+			fileWriter.format("\tlw %s, %d(%s)\n", destReg, offset, varName);
+		} 
+		else {
+			// CASE 3: Global Variable Label
 			fileWriter.format("\tlw %s, %s\n", destReg, varName);
 		}
 	}

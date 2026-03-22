@@ -12,4 +12,8 @@ public class AstTypeString extends AstType {
     }
 
     public String toString() { return "string"; }
+
+    public String getTypeName(){
+        return "String";
+    }
 }

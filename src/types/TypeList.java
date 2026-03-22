@@ -1,6 +1,6 @@
 package types;
 
-public class TypeList
+public class TypeList extends Type
 {
 	/****************/
 	/* DATA MEMBERS */

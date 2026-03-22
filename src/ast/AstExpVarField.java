@@ -1,6 +1,9 @@
 package ast;
 
+import temp.Temp;
+import temp.TempFactory;
 import types.*;
+import ir.*;
 
 public class AstExpVarField extends AstExpVar
 {
@@ -50,45 +53,48 @@ public class AstExpVarField extends AstExpVar
 		if (var  != null) AstGraphviz.getInstance().logEdge(serialNumber,var.serialNumber);
 	}
 
-	public Type semantMe()
-	{
-		Type t = null;
-		TypeClass tc = null;
+	public Type semantMe() {
+		Type baseType = var.semantMe(); // var is 'p'
 		
-		/******************************/
-		/* [1] Recursively semant var */
-		/******************************/
-		if (var != null) t = var.semantMe();
-		
-		/*********************************/
-		/* [2] Make sure type is a class */
-		/*********************************/
-		if (t.isClass() == false)
-		{
-			System.out.format(">> ERROR [%d:%d] access %s field of a non-class variable\n",6,6,fieldName);
-			System.exit(0);
+		// DEBUG: What did we get for 'p'?
+		System.out.println(">> [DEBUG] Field Access on '" + fieldName + "'. Base variable type is: " + 
+			(baseType != null ? baseType.getClass().getSimpleName() : "NULL"));
+
+		if (!(baseType instanceof TypeClass)) {
+			throw new RuntimeException("ERROR(" + lineNumber + ")");
 		}
-		else
-		{
-			tc = (TypeClass) t;
-		}
+
+		TypeClass tc = (TypeClass) baseType;
+		Type fieldType = tc.findFieldType(fieldName);
 		
-		/************************************/
-		/* [3] Look for fiedlName inside tc */
-		/************************************/
-		for (TypeList it = tc.dataMembers; it != null; it=it.tail)
-		{
-			if (it.head.name == fieldName)
-			{
-				return it.head;
-			}
+		// DEBUG: Did we find the field?
+		System.out.println(">> [DEBUG] findFieldType('" + fieldName + "') result: " + 
+			(fieldType != null ? "FOUND" : "NOT FOUND"));
+
+		if (fieldType == null) {
+			throw new RuntimeException("ERROR(" + lineNumber + ")");
 		}
 		
-		/*********************************************/
-		/* [4] fieldName does not exist in class var */
-		/*********************************************/
-		System.out.format(">> ERROR [%d:%d] field %s does not exist in class\n",6,6,fieldName);							
-		System.exit(0);
-		return null;
+		return fieldType;
+	}
+
+	public Temp irMe() {
+		// 1. Load the address of 'p' (this is our baseAddr)
+		Temp baseAddr = var.irMe();
+
+		// 2. Add your Null Pointer Check (Mandatory for Ex 5!)
+		Ir.getInstance().AddIrCommand(new IrCommand_Check_Null_Ptr(baseAddr));
+
+		// 3. Get the memory offset of 'age'
+		TypeClass tc = (TypeClass) var.semantMe();
+		int offset = tc.findFieldOffset(fieldName);
+
+		// 4. Create destination Temp
+		Temp result = TempFactory.getInstance().getFreshTemp();
+
+		// 5. Use the HEAP load command
+		Ir.getInstance().AddIrCommand(new IrCommandLoadField(result, baseAddr, offset));
+
+		return result;
 	}
 }

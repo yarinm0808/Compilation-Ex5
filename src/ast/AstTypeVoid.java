@@ -12,4 +12,8 @@ public class AstTypeVoid extends AstType {
     }
 
     public String toString() { return "void"; }
+
+    public String getTypeName(){
+        return "void";
+    };
 }

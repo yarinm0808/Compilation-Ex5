@@ -1,6 +1,6 @@
 package types;
 
-public class TypeClassVarDecList
+public class TypeClassVarDecList extends Type
 {
 	public TypeClassVarDec head;
 	public TypeClassVarDecList tail;
