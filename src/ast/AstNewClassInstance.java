@@ -7,6 +7,7 @@ import temp.TempFactory;
 
 public class AstNewClassInstance extends AstExp {
     public AstType type;
+    private TypeClass cachedType;
 
     public AstNewClassInstance(AstType type, int lineNumber) {
         this.serialNumber = AstNodeSerialNumber.getFresh();
@@ -35,23 +36,14 @@ public class AstNewClassInstance extends AstExp {
         }
 
         // 3. Return the class type so the parent (Assignment) can verify type compatibility
+        this.cachedType = (TypeClass) t;
         return t;
     }
+
     public Temp irMe() {
-        // 1. Retrieve the TypeClass from the Symbol Table
-        TypeClass tc = (TypeClass) SymbolTable.getInstance().find(type.getTypeName());
-
-        // 2. Calculate the number of fields (including inherited ones!)
-        int fieldCount = tc.getFieldCount(); 
-        int sizeInBytes = fieldCount * 4;
-
-        // 3. Allocate a temporary to hold the address of the new object
+        int sizeInBytes = cachedType.getFieldCount() * 4;
         Temp addressTemp = TempFactory.getInstance().getFreshTemp();
-
-        // 4. Generate IR Command for Malloc
-        // This will eventually translate to MIPS Syscall 9 (sbrk)
         Ir.getInstance().AddIrCommand(new IrCommand_Malloc(addressTemp, sizeInBytes));
-
         return addressTemp;
     }
 

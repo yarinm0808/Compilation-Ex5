@@ -115,23 +115,27 @@ varDec ::= type:t ID:name SEMICOLON
 
 funcDec ::= type:t ID:name LPAREN RPAREN LBRACE stmtList:body RBRACE
             {: 
-                RESULT = new AstDecFunc(t.toString(), name, null, body); 
+                // Pass 't' (the AstType object) directly
+                RESULT = new AstDecFunc(t, name, null, body); 
                 RESULT.lineNumber = tleft; 
             :}
           | type:t ID:name LPAREN formalList:args RPAREN LBRACE stmtList:body RBRACE
             {: 
-                RESULT = new AstDecFunc(t.toString(), name, args, body); 
+                // Pass 't' (the AstType object) directly
+                RESULT = new AstDecFunc(t, name, args, body); 
                 RESULT.lineNumber = tleft; 
             :}
           ;
 
 formalList ::= type:t ID:name
                {: 
-                  RESULT = new AstTypeNameList(new AstTypeName(t.toString(), name), null); 
+                  // Pass 't' (the AstType object) directly
+                  RESULT = new AstTypeNameList(new AstTypeName(t, name), null); 
                :}
              | type:t ID:name COMMA formalList:l
                {: 
-                  RESULT = new AstTypeNameList(new AstTypeName(t.toString(), name), l); 
+                  // Pass 't' (the AstType object) directly
+                  RESULT = new AstTypeNameList(new AstTypeName(t, name), l); 
                :}
              ;
 

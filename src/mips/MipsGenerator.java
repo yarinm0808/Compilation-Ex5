@@ -132,6 +132,9 @@ public class MipsGenerator
 		fileWriter.format("\tli %s,%d\n",idx,value);
 	}
 
+	public void slt(String dst, String src1, String src2) {
+    	fileWriter.format("\tslt %s, %s, %s\n", dst, src1, src2);
+	}
 	public void ReturnValue(String retval, String exitLabel) {
 		fileWriter.format("\tmove $v0, %s\n", retval);
 		fileWriter.format("\tj %s\n", exitLabel); 
@@ -202,16 +205,16 @@ public class MipsGenerator
 		fileWriter.format("\taddu %s,%s,%s\n", dst, oprnd1, oprnd2);
 		
 		// Check upper bound: 32767 
-		fileWriter.format("\tli $s0, 32767\n");
-		fileWriter.format("\tble %s, $s0, %s\n", dst, upperCheck);
-		fileWriter.format("\tmove %s, $s0\n", dst);
+		fileWriter.format("\tli $v1, 32767\n");
+		fileWriter.format("\tble %s, $v1, %s\n", dst, upperCheck);
+		fileWriter.format("\tmove %s, $v1\n", dst);
 		fileWriter.format("\tj %s\n", done);
 
 		fileWriter.format("%s:\n", upperCheck);
 		// Check lower bound: -32768 
-		fileWriter.format("\tli $s0, -32768\n");
-		fileWriter.format("\tbge %s, $s0, %s\n", dst, done);
-		fileWriter.format("\tmove %s, $s0\n", dst);
+		fileWriter.format("\tli $v1, -32768\n");
+		fileWriter.format("\tbge %s, $v1, %s\n", dst, done);
+		fileWriter.format("\tmove %s, $v1\n", dst);
 
 		fileWriter.format("%s:\n", done);
 	}
@@ -245,25 +248,24 @@ public class MipsGenerator
 		fileWriter.format("%s:\n", done);
 	}
 	
-	public void mul(String dstidx, String i1, String i2)
-	{
+	public void mul(String dst, String i1, String i2) {
 		String label_upper_check = "label_mul_upper_" + AstNodeSerialNumber.getFresh();
 		String label_done = "label_mul_done_" + AstNodeSerialNumber.getFresh();
 
 		// 1. Perform multiplication
-		fileWriter.format("\tmul %s,%s,%s\n", dstidx, i1, i2);
+		fileWriter.format("\tmul %s, %s, %s\n", dst, i1, i2);
 
 		// 2. Upper Bound Check (32767)
-		fileWriter.format("\tli $at, 32767\n");
-		fileWriter.format("\tble %s, $s0, %s\n", dstidx, label_upper_check);
-		fileWriter.format("\tmove %s, $s0\n", dstidx);
+		fileWriter.format("\tli $v1, 32767\n");             // Load into $v1
+		fileWriter.format("\tble %s, $v1, %s\n", dst, label_upper_check); // Safe: ble uses $at
+		fileWriter.format("\tmove %s, $v1\n", dst);
 		fileWriter.format("\tj %s\n", label_done); 
 
 		// 3. Lower Bound Check (-32768)
 		fileWriter.format("%s:\n", label_upper_check);
-		fileWriter.format("\tli $s0, -32768\n"); // Corrected to -32768
-		fileWriter.format("\tbge %s, $s0, %s\n", dstidx, label_done); // Jump to done
-		fileWriter.format("\tmove %s, $s0\n", dstidx);
+		fileWriter.format("\tli $v1, -32768\n");            // Load into $v1
+		fileWriter.format("\tbge %s, $v1, %s\n", dst, label_done);       // Safe: bge uses $at
+		fileWriter.format("\tmove %s, $v1\n", dst);
 
 		fileWriter.format("%s:\n", label_done);
 	}

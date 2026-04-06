@@ -85,17 +85,18 @@ public class AstStmtAssign extends AstStmt
 		Temp src = exp.irMe();
 
 		if (var instanceof AstExpVarSimple) {
-			// --- EXISTING LOGIC FOR LOCAL/GLOBAL VARS ---
-			String name = ((AstExpVarSimple) var).name;
-			SymbolTableEntry entry = SymbolTable.getInstance().findEntry(name);
+			// Use the entry ALREADY in the node!
+			SymbolTableEntry entry = ((AstExpVarSimple) var).entry; 
 
-			if (entry.scopeLevel == 0) {
-				Ir.getInstance().AddIrCommand(new IrCommandStore(name, src, 0));
-			} else {
+			if (entry.scopeLevel > 0) {
+				// Local variable or Parameter - USE THE OFFSET
 				int finalOffset = (entry.isParameter) ? entry.offset : -44 - (entry.offset * 4);
 				Ir.getInstance().AddIrCommand(new IrCommandStore(null, src, finalOffset));
+			} else {
+				// Global variable - USE THE NAME
+				Ir.getInstance().AddIrCommand(new IrCommandStore(entry.name, src, 0));
 			}
-		} 
+		}
 		else if (var instanceof AstExpVarField) {
 			// --- NEW LOGIC FOR CLASS FIELDS (p.age := 5) ---
 			AstExpVarField fieldVar = (AstExpVarField) var;
@@ -113,6 +114,16 @@ public class AstStmtAssign extends AstStmt
 			// 4. Generate the STORE command to the heap
 			// This generates: sw $src, offset($baseAddr)
 			Ir.getInstance().AddIrCommand(new IrCommandStoreField(baseAddr, offset, src));
+		}
+		else if (var instanceof AstExpVarSubscript) {
+			AstExpVarSubscript lhsSub = (AstExpVarSubscript) var;
+			
+			// 3. Evaluate the base array pointer and the index
+			Temp basePtr = lhsSub.var.irMe();
+			Temp indexVal = lhsSub.subscript.irMe();
+
+			// 4. ADD THE NEW COMMAND!
+			Ir.getInstance().AddIrCommand(new IrCommandStoreSubscript(basePtr, indexVal, src));
 		}
 		
 		return null;

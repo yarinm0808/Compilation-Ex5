@@ -2,134 +2,756 @@ digraph
 {
 graph [ordering = "out"]
 v1 [label = "VAR
-DEC(age)"];
+DEC(head)"];
 v1 -> v0;
-v2 [label = "DEC
-LIST
-"];
-v2 -> v1;
-v3 [label = "CLASS
-Person"];
+v3 [label = "VAR
+DEC(tail)"];
 v3 -> v2;
-v7 [label = "NEW
-CLASS"];
-v7 -> v6;
-v8 [label = "VAR
-DEC(p)"];
-v8 -> v5;
-v8 -> v7;
-v9 [label = "STMT
-DEC
-VAR"];
-v9 -> v8;
-v10 [label = "VAR
-SIMPLE(p)"];
-v11 [label = "FIELD
-VAR
-___.age"];
-v11 -> v10;
-v12 [label = "INT(5)"];
-v13 [label = "ASSIGN
-left := right
-"];
-v13 -> v11;
-v13 -> v12;
-v14 [label = "VAR
-SIMPLE(p)"];
-v15 [label = "FIELD
-VAR
-___.age"];
-v15 -> v14;
-v16 [label = "EXP
+v4 [label = "DEC
 LIST
 "];
+v4 -> v3;
+v5 [label = "DEC
+LIST
+"];
+v5 -> v1;
+v5 -> v4;
+v6 [label = "CLASS
+IntList"];
+v6 -> v5;
+v11 [label = "TYPE-NAME
+LIST
+"];
+v11 -> v10;
+v13 [label = "TYPE-NAME
+LIST
+"];
+v13 -> v12;
+v13 -> v11;
+v14 [label = "VAR
+SIMPLE(l1)"];
+v15 [label = "NIL"];
+v16 [label = "BINOP(=)"];
+v16 -> v14;
 v16 -> v15;
-v17 [label = "CALL(PrintInt)
-WITH"];
-v17 -> v16;
-v18 [label = "STMT
-CALL"];
+v17 [label = "VAR
+SIMPLE(l2)"];
+v18 [label = "RETURN"];
 v18 -> v17;
-v20 [label = "INT(3)"];
+v19 [label = "STMT
+LIST
+"];
+v19 -> v18;
+v20 [label = "IF (left)
+THEN right"];
+v20 -> v16;
+v20 -> v19;
 v21 [label = "VAR
-DEC(a)"];
-v21 -> v19;
-v21 -> v20;
-v22 [label = "STMT
-DEC
-VAR"];
-v22 -> v21;
+SIMPLE(l2)"];
+v22 [label = "NIL"];
+v23 [label = "BINOP(=)"];
+v23 -> v21;
+v23 -> v22;
 v24 [label = "VAR
-SIMPLE(a)"];
-v25 [label = "VAR
-SIMPLE(p)"];
-v26 [label = "FIELD
-VAR
-___.age"];
+SIMPLE(l1)"];
+v25 [label = "RETURN"];
+v25 -> v24;
+v26 [label = "STMT
+LIST
+"];
 v26 -> v25;
-v27 [label = "BINOP(+)"];
-v27 -> v24;
+v27 [label = "IF (left)
+THEN right"];
+v27 -> v23;
 v27 -> v26;
 v28 [label = "VAR
-DEC(z)"];
-v28 -> v23;
-v28 -> v27;
-v29 [label = "STMT
-DEC
-VAR"];
+SIMPLE(l1)"];
+v29 [label = "FIELD
+VAR
+___.head"];
 v29 -> v28;
 v30 [label = "VAR
-SIMPLE(z)"];
-v31 [label = "EXP
-LIST
-"];
+SIMPLE(l2)"];
+v31 [label = "FIELD
+VAR
+___.head"];
 v31 -> v30;
-v32 [label = "CALL(PrintInt)
-WITH"];
+v32 [label = "BINOP()"];
+v32 -> v29;
 v32 -> v31;
-v33 [label = "STMT
-CALL"];
-v33 -> v32;
-v34 [label = "STMT
-LIST
-"];
-v34 -> v33;
-v35 [label = "STMT
-LIST
-"];
-v35 -> v29;
+v34 [label = "VAR
+SIMPLE(l1)"];
+v35 [label = "VAR
+DEC(l3)"];
+v35 -> v33;
 v35 -> v34;
 v36 [label = "STMT
-LIST
-"];
-v36 -> v22;
+DEC
+VAR"];
 v36 -> v35;
-v37 [label = "STMT
-LIST
-"];
-v37 -> v18;
-v37 -> v36;
-v38 [label = "STMT
-LIST
-"];
-v38 -> v13;
+v37 [label = "VAR
+SIMPLE(l3)"];
+v38 [label = "FIELD
+VAR
+___.tail"];
 v38 -> v37;
-v39 [label = "STMT
+v39 [label = "VAR
+SIMPLE(l1)"];
+v40 [label = "FIELD
+VAR
+___.tail"];
+v40 -> v39;
+v41 [label = "VAR
+SIMPLE(l2)"];
+v42 [label = "EXP
 LIST
 "];
-v39 -> v9;
-v39 -> v38;
-v40 [label = "FUNC(main)
+v42 -> v41;
+v43 [label = "EXP
+LIST
+"];
+v43 -> v40;
+v43 -> v42;
+v44 [label = "CALL(MergeLists)
+WITH"];
+v44 -> v43;
+v45 [label = "ASSIGN
+left := right
+"];
+v45 -> v38;
+v45 -> v44;
+v46 [label = "VAR
+SIMPLE(l3)"];
+v47 [label = "RETURN"];
+v47 -> v46;
+v48 [label = "STMT
+LIST
+"];
+v48 -> v47;
+v49 [label = "STMT
+LIST
+"];
+v49 -> v45;
+v49 -> v48;
+v50 [label = "STMT
+LIST
+"];
+v50 -> v36;
+v50 -> v49;
+v51 [label = "IF (left)
+THEN right"];
+v51 -> v32;
+v51 -> v50;
+v52 [label = "VAR
+SIMPLE(l2)"];
+v53 [label = "FIELD
+VAR
+___.head"];
+v53 -> v52;
+v54 [label = "VAR
+SIMPLE(l1)"];
+v55 [label = "FIELD
+VAR
+___.head"];
+v55 -> v54;
+v56 [label = "BINOP()"];
+v56 -> v53;
+v56 -> v55;
+v58 [label = "VAR
+SIMPLE(l2)"];
+v59 [label = "VAR
+DEC(l3)"];
+v59 -> v57;
+v59 -> v58;
+v60 [label = "STMT
+DEC
+VAR"];
+v60 -> v59;
+v61 [label = "VAR
+SIMPLE(l3)"];
+v62 [label = "FIELD
+VAR
+___.tail"];
+v62 -> v61;
+v63 [label = "VAR
+SIMPLE(l1)"];
+v64 [label = "VAR
+SIMPLE(l2)"];
+v65 [label = "FIELD
+VAR
+___.tail"];
+v65 -> v64;
+v66 [label = "EXP
+LIST
+"];
+v66 -> v65;
+v67 [label = "EXP
+LIST
+"];
+v67 -> v63;
+v67 -> v66;
+v68 [label = "CALL(MergeLists)
+WITH"];
+v68 -> v67;
+v69 [label = "ASSIGN
+left := right
+"];
+v69 -> v62;
+v69 -> v68;
+v70 [label = "VAR
+SIMPLE(l3)"];
+v71 [label = "RETURN"];
+v71 -> v70;
+v72 [label = "STMT
+LIST
+"];
+v72 -> v71;
+v73 [label = "STMT
+LIST
+"];
+v73 -> v69;
+v73 -> v72;
+v74 [label = "STMT
+LIST
+"];
+v74 -> v60;
+v74 -> v73;
+v75 [label = "IF (left)
+THEN right"];
+v75 -> v56;
+v75 -> v74;
+v76 [label = "STMT
+LIST
+"];
+v76 -> v75;
+v77 [label = "STMT
+LIST
+"];
+v77 -> v51;
+v77 -> v76;
+v78 [label = "STMT
+LIST
+"];
+v78 -> v27;
+v78 -> v77;
+v79 [label = "STMT
+LIST
+"];
+v79 -> v20;
+v79 -> v78;
+v80 [label = "FUNC(MergeLists)
+:IntList
+"];
+v80 -> v13;
+v80 -> v79;
+v84 [label = "NEW
+CLASS"];
+v84 -> v83;
+v85 [label = "VAR
+DEC(a)"];
+v85 -> v82;
+v85 -> v84;
+v86 [label = "STMT
+DEC
+VAR"];
+v86 -> v85;
+v89 [label = "NEW
+CLASS"];
+v89 -> v88;
+v90 [label = "VAR
+DEC(b)"];
+v90 -> v87;
+v90 -> v89;
+v91 [label = "STMT
+DEC
+VAR"];
+v91 -> v90;
+v94 [label = "NEW
+CLASS"];
+v94 -> v93;
+v95 [label = "VAR
+DEC(c)"];
+v95 -> v92;
+v95 -> v94;
+v96 [label = "STMT
+DEC
+VAR"];
+v96 -> v95;
+v99 [label = "NEW
+CLASS"];
+v99 -> v98;
+v100 [label = "VAR
+DEC(d)"];
+v100 -> v97;
+v100 -> v99;
+v101 [label = "STMT
+DEC
+VAR"];
+v101 -> v100;
+v104 [label = "NEW
+CLASS"];
+v104 -> v103;
+v105 [label = "VAR
+DEC(A)"];
+v105 -> v102;
+v105 -> v104;
+v106 [label = "STMT
+DEC
+VAR"];
+v106 -> v105;
+v109 [label = "NEW
+CLASS"];
+v109 -> v108;
+v110 [label = "VAR
+DEC(B)"];
+v110 -> v107;
+v110 -> v109;
+v111 [label = "STMT
+DEC
+VAR"];
+v111 -> v110;
+v114 [label = "NEW
+CLASS"];
+v114 -> v113;
+v115 [label = "VAR
+DEC(C)"];
+v115 -> v112;
+v115 -> v114;
+v116 [label = "STMT
+DEC
+VAR"];
+v116 -> v115;
+v119 [label = "NEW
+CLASS"];
+v119 -> v118;
+v120 [label = "VAR
+DEC(D)"];
+v120 -> v117;
+v120 -> v119;
+v121 [label = "STMT
+DEC
+VAR"];
+v121 -> v120;
+v122 [label = "VAR
+SIMPLE(a)"];
+v123 [label = "FIELD
+VAR
+___.head"];
+v123 -> v122;
+v124 [label = "INT(34)"];
+v125 [label = "ASSIGN
+left := right
+"];
+v125 -> v123;
+v125 -> v124;
+v126 [label = "VAR
+SIMPLE(b)"];
+v127 [label = "FIELD
+VAR
+___.head"];
+v127 -> v126;
+v128 [label = "INT(70)"];
+v129 [label = "ASSIGN
+left := right
+"];
+v129 -> v127;
+v129 -> v128;
+v130 [label = "VAR
+SIMPLE(c)"];
+v131 [label = "FIELD
+VAR
+___.head"];
+v131 -> v130;
+v132 [label = "INT(92)"];
+v133 [label = "ASSIGN
+left := right
+"];
+v133 -> v131;
+v133 -> v132;
+v134 [label = "VAR
+SIMPLE(d)"];
+v135 [label = "FIELD
+VAR
+___.head"];
+v135 -> v134;
+v136 [label = "INT(96)"];
+v137 [label = "ASSIGN
+left := right
+"];
+v137 -> v135;
+v137 -> v136;
+v138 [label = "VAR
+SIMPLE(A)"];
+v139 [label = "FIELD
+VAR
+___.head"];
+v139 -> v138;
+v140 [label = "INT(12)"];
+v141 [label = "ASSIGN
+left := right
+"];
+v141 -> v139;
+v141 -> v140;
+v142 [label = "VAR
+SIMPLE(B)"];
+v143 [label = "FIELD
+VAR
+___.head"];
+v143 -> v142;
+v144 [label = "INT(50)"];
+v145 [label = "ASSIGN
+left := right
+"];
+v145 -> v143;
+v145 -> v144;
+v146 [label = "VAR
+SIMPLE(C)"];
+v147 [label = "FIELD
+VAR
+___.head"];
+v147 -> v146;
+v148 [label = "INT(97)"];
+v149 [label = "ASSIGN
+left := right
+"];
+v149 -> v147;
+v149 -> v148;
+v150 [label = "VAR
+SIMPLE(D)"];
+v151 [label = "FIELD
+VAR
+___.head"];
+v151 -> v150;
+v152 [label = "INT(99)"];
+v153 [label = "ASSIGN
+left := right
+"];
+v153 -> v151;
+v153 -> v152;
+v154 [label = "VAR
+SIMPLE(a)"];
+v155 [label = "FIELD
+VAR
+___.tail"];
+v155 -> v154;
+v156 [label = "VAR
+SIMPLE(b)"];
+v157 [label = "ASSIGN
+left := right
+"];
+v157 -> v155;
+v157 -> v156;
+v158 [label = "VAR
+SIMPLE(b)"];
+v159 [label = "FIELD
+VAR
+___.tail"];
+v159 -> v158;
+v160 [label = "VAR
+SIMPLE(c)"];
+v161 [label = "ASSIGN
+left := right
+"];
+v161 -> v159;
+v161 -> v160;
+v162 [label = "VAR
+SIMPLE(c)"];
+v163 [label = "FIELD
+VAR
+___.tail"];
+v163 -> v162;
+v164 [label = "VAR
+SIMPLE(d)"];
+v165 [label = "ASSIGN
+left := right
+"];
+v165 -> v163;
+v165 -> v164;
+v166 [label = "VAR
+SIMPLE(d)"];
+v167 [label = "FIELD
+VAR
+___.tail"];
+v167 -> v166;
+v168 [label = "NIL"];
+v169 [label = "ASSIGN
+left := right
+"];
+v169 -> v167;
+v169 -> v168;
+v170 [label = "VAR
+SIMPLE(A)"];
+v171 [label = "FIELD
+VAR
+___.tail"];
+v171 -> v170;
+v172 [label = "VAR
+SIMPLE(B)"];
+v173 [label = "ASSIGN
+left := right
+"];
+v173 -> v171;
+v173 -> v172;
+v174 [label = "VAR
+SIMPLE(B)"];
+v175 [label = "FIELD
+VAR
+___.tail"];
+v175 -> v174;
+v176 [label = "VAR
+SIMPLE(C)"];
+v177 [label = "ASSIGN
+left := right
+"];
+v177 -> v175;
+v177 -> v176;
+v178 [label = "VAR
+SIMPLE(C)"];
+v179 [label = "FIELD
+VAR
+___.tail"];
+v179 -> v178;
+v180 [label = "VAR
+SIMPLE(D)"];
+v181 [label = "ASSIGN
+left := right
+"];
+v181 -> v179;
+v181 -> v180;
+v182 [label = "VAR
+SIMPLE(D)"];
+v183 [label = "FIELD
+VAR
+___.tail"];
+v183 -> v182;
+v184 [label = "NIL"];
+v185 [label = "ASSIGN
+left := right
+"];
+v185 -> v183;
+v185 -> v184;
+v187 [label = "VAR
+SIMPLE(a)"];
+v188 [label = "VAR
+SIMPLE(A)"];
+v189 [label = "EXP
+LIST
+"];
+v189 -> v188;
+v190 [label = "EXP
+LIST
+"];
+v190 -> v187;
+v190 -> v189;
+v191 [label = "CALL(MergeLists)
+WITH"];
+v191 -> v190;
+v192 [label = "VAR
+DEC(l)"];
+v192 -> v186;
+v192 -> v191;
+v193 [label = "STMT
+DEC
+VAR"];
+v193 -> v192;
+v194 [label = "INT(1)"];
+v195 [label = "VAR
+SIMPLE(l)"];
+v196 [label = "NIL"];
+v197 [label = "BINOP(=)"];
+v197 -> v195;
+v197 -> v196;
+v198 [label = "BINOP(-)"];
+v198 -> v194;
+v198 -> v197;
+v199 [label = "VAR
+SIMPLE(l)"];
+v200 [label = "FIELD
+VAR
+___.head"];
+v200 -> v199;
+v201 [label = "EXP
+LIST
+"];
+v201 -> v200;
+v202 [label = "CALL(PrintInt)
+WITH"];
+v202 -> v201;
+v203 [label = "STMT
+CALL"];
+v203 -> v202;
+v204 [label = "VAR
+SIMPLE(l)"];
+v205 [label = "VAR
+SIMPLE(l)"];
+v206 [label = "FIELD
+VAR
+___.tail"];
+v206 -> v205;
+v207 [label = "ASSIGN
+left := right
+"];
+v207 -> v204;
+v207 -> v206;
+v208 [label = "STMT
+LIST
+"];
+v208 -> v207;
+v209 [label = "STMT
+LIST
+"];
+v209 -> v203;
+v209 -> v208;
+v0 [label = "WHILE
+(cond)
+{body}"];
+v0 -> v198;
+v0 -> v209;
+v210 [label = "STMT
+LIST
+"];
+v210 -> v0;
+v211 [label = "STMT
+LIST
+"];
+v211 -> v193;
+v211 -> v210;
+v212 [label = "STMT
+LIST
+"];
+v212 -> v185;
+v212 -> v211;
+v213 [label = "STMT
+LIST
+"];
+v213 -> v181;
+v213 -> v212;
+v214 [label = "STMT
+LIST
+"];
+v214 -> v177;
+v214 -> v213;
+v215 [label = "STMT
+LIST
+"];
+v215 -> v173;
+v215 -> v214;
+v216 [label = "STMT
+LIST
+"];
+v216 -> v169;
+v216 -> v215;
+v217 [label = "STMT
+LIST
+"];
+v217 -> v165;
+v217 -> v216;
+v218 [label = "STMT
+LIST
+"];
+v218 -> v161;
+v218 -> v217;
+v219 [label = "STMT
+LIST
+"];
+v219 -> v157;
+v219 -> v218;
+v220 [label = "STMT
+LIST
+"];
+v220 -> v153;
+v220 -> v219;
+v221 [label = "STMT
+LIST
+"];
+v221 -> v149;
+v221 -> v220;
+v222 [label = "STMT
+LIST
+"];
+v222 -> v145;
+v222 -> v221;
+v223 [label = "STMT
+LIST
+"];
+v223 -> v141;
+v223 -> v222;
+v224 [label = "STMT
+LIST
+"];
+v224 -> v137;
+v224 -> v223;
+v225 [label = "STMT
+LIST
+"];
+v225 -> v133;
+v225 -> v224;
+v226 [label = "STMT
+LIST
+"];
+v226 -> v129;
+v226 -> v225;
+v227 [label = "STMT
+LIST
+"];
+v227 -> v125;
+v227 -> v226;
+v228 [label = "STMT
+LIST
+"];
+v228 -> v121;
+v228 -> v227;
+v229 [label = "STMT
+LIST
+"];
+v229 -> v116;
+v229 -> v228;
+v230 [label = "STMT
+LIST
+"];
+v230 -> v111;
+v230 -> v229;
+v231 [label = "STMT
+LIST
+"];
+v231 -> v106;
+v231 -> v230;
+v232 [label = "STMT
+LIST
+"];
+v232 -> v101;
+v232 -> v231;
+v233 [label = "STMT
+LIST
+"];
+v233 -> v96;
+v233 -> v232;
+v234 [label = "STMT
+LIST
+"];
+v234 -> v91;
+v234 -> v233;
+v235 [label = "STMT
+LIST
+"];
+v235 -> v86;
+v235 -> v234;
+v236 [label = "FUNC(main)
 :void
 "];
-v40 -> v39;
-v41 [label = "DEC
+v236 -> v235;
+v237 [label = "DEC
 LIST
 "];
-v41 -> v40;
-v42 [label = "DEC
+v237 -> v236;
+v238 [label = "DEC
 LIST
 "];
-v42 -> v3;
-v42 -> v41;
+v238 -> v80;
+v238 -> v237;
+v239 [label = "DEC
+LIST
+"];
+v239 -> v6;
+v239 -> v238;
 }

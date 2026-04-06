@@ -75,20 +75,30 @@ public class AstExpBinop extends AstExp
 		if (right != null) AstGraphviz.getInstance().logEdge(serialNumber,right.serialNumber);
 	}
 
-	public Type semantMe()
-	{
-		Type t1 = null;
-		Type t2 = null;
-		
-		if (left  != null) t1 = left.semantMe();
-		if (right != null) t2 = right.semantMe();
-		
-		if ((t1 == TypeInt.getInstance()) && (t2 == TypeInt.getInstance()))
-		{
+	public Type semantMe() {
+		Type t1 = (left != null)  ? left.semantMe()  : null;
+		Type t2 = (right != null) ? right.semantMe() : null;
+
+		// 1. Both are Integers (e.g., 5 + 6 or i < 10)
+		if (t1 == TypeInt.getInstance() && t2 == TypeInt.getInstance()) {
 			return TypeInt.getInstance();
 		}
-		System.exit(0);
-		return null;
+
+		// 2. Pointer Equality (e.g., l1 = nil or l1 = l2)
+		// We only allow this for the Equality operator (op == 6)
+		if (op == 6) {
+			// Rule A: Comparing two pointers of the EXACT same class
+			if (t1 == t2) return TypeInt.getInstance();
+
+			// Rule B: Comparing any Class pointer to 'nil'
+			if ((t1 instanceof TypeClass && t2 instanceof TypeNil) ||
+				(t1 instanceof TypeNil && t2 instanceof TypeClass)) {
+				return TypeInt.getInstance();
+			}
+		}
+
+		// If we reach here, it's a real error
+		throw new RuntimeException(">> ERROR: Type mismatch in Binary Operation: " + t1 + " and " + t2);
 	}
 
 	public Temp irMe()
@@ -128,6 +138,10 @@ public class AstExpBinop extends AstExp
 			Ir.getInstance().AddIrCommand(new IrCommand_Check_Division_By_Zero(t2));
         	Ir.getInstance().AddIrCommand(new IrCommandBinopDivIntegers(dst, t1, t2));
     	}
+		if (op == 4) { 
+			System.out.println("[DEBUG] op:" + op +" bin operation is LT");
+			Ir.getInstance().AddIrCommand(new IrCommandBinopLtIntegers(dst, t1, t2));
+		}
 		if (op == 6)
 		{
 			System.out.println("[DEBUG] op:" + op +" bin operation is EQ");

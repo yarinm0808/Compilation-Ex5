@@ -46,40 +46,40 @@ public class AstDecClass extends AstDec
     }
 
     public Type semantMe() {
-        // 1. Resolve the father class if it exists (for inheritance)
+        // 1. Resolve the father class if it exists
         TypeClass fatherType = null;
-        if (this.father != null) { // Changed 'superName' to 'this.father'
+        if (this.father != null) {
             Type t = SymbolTable.getInstance().find(this.father);
             if (t instanceof TypeClass) {
                 fatherType = (TypeClass) t;
             } else {
-                // Optional: throw error if father isn't a class
                 throw new RuntimeException("ERROR(" + lineNumber + "): superclass " + this.father + " not found.");
             }
         }
 
-        // 2. Initialize TypeClass: (fatherType, name, data_members)
+        // 2. Initialize TypeClass
         TypeClass tc = new TypeClass(fatherType, name, null);
+
+        // --- THE FIX: REGISTER THE CLASS NOW ---
+        // This allows the fields inside to "see" the class name during their own semantic pass.
+        SymbolTable.getInstance().enter(name, tc);
 
         // 3. Populate the data_members list
         TypeList membersList = null;
-        
-        // Changed 'this.fields' to 'this.dataMembers' to match your class field
         for (AstDecList it = this.dataMembers; it != null; it = it.tail) {
             if (it.head instanceof AstDecVar) {
                 AstDecVar varDec = (AstDecVar) it.head;
+                
+                // Now, when this calls semantMe(), it will find 'IntList' in the table!
                 Type fieldType = varDec.type.semantMe();
                 
-                // This is the bridge that fixes the "NOT FOUND" error!
-                TypeClassVarDec bridge = new TypeClassVarDec(fieldType, varDec.name);
-                membersList = new TypeList(bridge, membersList);
+                TypeClassVarDec fieldEntry = new TypeClassVarDec(fieldType, varDec.name);
+                membersList = new TypeList(fieldEntry, membersList);
             }
-            // If you handle methods, you'd add 'it.head instanceof AstDecFunc' here
         }
 
-        // 4. Attach the list and register
+        // 4. Attach the completed list to the type object
         tc.data_members = membersList;
-        SymbolTable.getInstance().enter(name, tc);
 
         return tc;
     }

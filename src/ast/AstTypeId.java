@@ -19,7 +19,8 @@ public class AstTypeId extends AstType{
         return t;
     }
 
-    public String toString() { return "id"; }
+    @Override
+    public String toString() { return this.name; }
 
     public String getTypeName(){
         return this.name;

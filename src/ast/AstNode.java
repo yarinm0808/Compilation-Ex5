@@ -1,7 +1,7 @@
 package ast;
 
 import temp.*;
-
+import types.*;
 public abstract class AstNode
 {
 	/*******************************************/
@@ -19,6 +19,7 @@ public abstract class AstNode
 	{
 		System.out.print("AST NODE UNKNOWN\n");
 	}
+	public Type semantMe() { return null; }
 
 	/*****************************************/
 	/* The default IR action for an AST node */

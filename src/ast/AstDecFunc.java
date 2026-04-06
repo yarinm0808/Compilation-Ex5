@@ -5,35 +5,32 @@ import symboltable.*;
 import temp.*;
 import ir.*;
 
-public class AstDecFunc extends AstDec
-{
-	/****************/
-	/* DATA MEMBERS */
-	/****************/
-	public String returnTypeName;
-	public String name;
-	public AstTypeNameList params;
-	public AstStmtList body;
-	
-	/******************/
-	/* CONSTRUCTOR(S) */
-	/******************/
-	public AstDecFunc(
-		String returnTypeName,
-		String name,
-		AstTypeNameList params,
-		AstStmtList body)
-	{
-		/******************************/
-		/* SET A UNIQUE SERIAL NUMBER */
-		/******************************/
-		serialNumber = AstNodeSerialNumber.getFresh();
+public class AstDecFunc extends AstDec {
+    /****************/
+    /* DATA MEMBERS */
+    /****************/
+    // CHANGE: Use AstType instead of String
+    public AstType returnTypeNode; 
+    public String name;
+    public AstTypeNameList params;
+    public AstStmtList body;
 
-		this.returnTypeName = returnTypeName;
-		this.name = name;
-		this.params = params;
-		this.body = body;
-	}
+    /******************/
+    /* CONSTRUCTOR(S) */
+    /******************/
+    public AstDecFunc(
+        AstType returnTypeNode, // CHANGE: Accept the node
+        String name,
+        AstTypeNameList params,
+        AstStmtList body)
+    {
+        serialNumber = AstNodeSerialNumber.getFresh();
+
+        this.returnTypeNode = returnTypeNode; // Store the node
+        this.name = name;
+        this.params = params;
+        this.body = body;
+    }
 
 	/************************************************************/
 	/* The printing message for a function declaration AST node */
@@ -43,7 +40,7 @@ public class AstDecFunc extends AstDec
 		/*************************************************/
 		/* AST NODE TYPE = AST NODE FUNCTION DECLARATION */
 		/*************************************************/
-		System.out.format("FUNC(%s):%s\n",name,returnTypeName);
+		System.out.format("FUNC(%s):%s\n",name,returnTypeNode);
 
 		/***************************************/
 		/* RECURSIVELY PRINT params + body ... */
@@ -56,7 +53,7 @@ public class AstDecFunc extends AstDec
 		/***************************************/
 		AstGraphviz.getInstance().logNode(
                 serialNumber,
-			String.format("FUNC(%s)\n:%s\n",name,returnTypeName));
+			String.format("FUNC(%s)\n:%s\n",name,returnTypeNode));
 		
 		/****************************************/
 		/* PRINT Edges to AST GRAPHVIZ DOT file */
@@ -65,62 +62,41 @@ public class AstDecFunc extends AstDec
 		if (body   != null) AstGraphviz.getInstance().logEdge(serialNumber,body.serialNumber);
 	}
 
-	public Type semantMe()
-	{
-		Type t;
-		Type returnType = null;
-		TypeList type_list = null;
+	@Override
+	public Type semantMe() {
+		// [0] Resolve return type node
+		Type returnType = returnTypeNode.semantMe();
+		if (returnType == null) returnType = TypeVoid.getInstance();
 
-		/*******************/
-		/* [0] return type */
-		/*******************/
-		returnType = SymbolTable.getInstance().find(returnTypeName);
-		if (returnType == null)
-		{
-			System.out.format(">> ERROR [%d:%d] non existing return type %s\n",6,6,returnType);				
+		// [2] Build the parameter type list
+		TypeList type_list = null;
+		for (AstTypeNameList it = params; it != null; it = it.tail) {
+			// CHANGE: Use it.head.semantMe() instead of manual find()
+			// it.head is an AstTypeName, which now knows how to resolve its typeNode
+			Type t = it.head.semantMe(); 
+			
+			type_list = new TypeList(t, type_list);
 		}
-	
-		/****************************/
-		/* [1] Begin Function Scope */
-		/****************************/
+
+		// [3] Register Function EARLY
+		SymbolTable.getInstance().enter(name, new TypeFunction(returnType, name, type_list));
+
+		// [4] Analyze Body in a new scope
 		SymbolTable.getInstance().beginScope();
 
-		/***************************/
-		/* [2] Semant Input Params */
-		/***************************/
-		for (AstTypeNameList it = params; it  != null; it = it.tail)
-		{
-			t = SymbolTable.getInstance().find(it.head.type);
-			if (t == null)
-			{
-				System.out.format(">> ERROR [%d:%d] non existing type %s\n",2,2,it.head.type);				
-			}
-			else
-			{
-				type_list = new TypeList(t,type_list);
-				it.head.entry = SymbolTable.getInstance().enter(it.head.name, t);
-			}
+		// [5] Populate the scope with parameters
+		for (AstTypeNameList it = params; it != null; it = it.tail) {
+			// CHANGE: Again, use the node's semantMe
+			Type t = it.head.semantMe();
+			
+			// it.head.entry was already set inside it.head.semantMe()!
+			// No need to call enter() again here unless you want to be extra safe
 		}
 
-		/*******************/
-		/* [3] Semant Body */
-		/*******************/
-		body.semantMe();
+		if (body != null) body.semantMe();
 
-		/*****************/
-		/* [4] End Scope */
-		/*****************/
 		SymbolTable.getInstance().endScope();
-
-		/***************************************************/
-		/* [5] Enter the Function Type to the Symbol Table */
-		/***************************************************/
-		SymbolTable.getInstance().enter(name,new TypeFunction(returnType,name,type_list));
-
-		/************************************************************/
-		/* [6] Return value is irrelevant for function declarations */
-		/************************************************************/
-		return null;		
+		return null;
 	}
 
 	

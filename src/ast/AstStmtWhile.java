@@ -18,6 +18,20 @@ public class AstStmtWhile extends AstStmt
 		this.body = body;
 	}
 
+	public void printMe()
+    {
+        System.out.print("AST NODE STMT WHILE\n");
+        if (cond != null) cond.printMe();
+        if (body != null) body.printMe();
+
+        AstGraphviz.getInstance().logNode(
+                serialNumber,
+                "WHILE\n(cond)\n{body}");
+        
+        if (cond != null) AstGraphviz.getInstance().logEdge(serialNumber, cond.serialNumber);
+        if (body != null) AstGraphviz.getInstance().logEdge(serialNumber, body.serialNumber);
+    }
+
 	@Override
 	public Type semantMe(){
 		Type t = cond.semantMe();

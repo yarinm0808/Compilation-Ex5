@@ -42,15 +42,12 @@ public class IrCommandLoadSubscript extends IrCommand {
 
         MipsGenerator mips = MipsGenerator.getInstance();
 
-        // 1. Calculate the offset: (index + 1) * 4
-        // We use $at (Assembler Temporary) for intermediate math to avoid overwriting your temps
-        mips.add(String.format("addi $at, %s, 1", regIdx)); // $at = index + 1 (skip header)
-        mips.add("sll $at, $at, 2");                       // $at = $at * 4 (convert to bytes)
-
-        // 2. Add the offset to the base address
+        // Use a RAW add/addi that does NOT saturate!
+        mips.add(String.format("addi $at, %s, 1",regIdx));    // $at = index + 1
+        mips.add(String.format("sll $at, $at, 2"));          // $at = (index + 1) * 4
         mips.add(String.format("addu $at, $at, %s", regBase)); // $at = Base + Offset
 
-        // 3. Load the actual value from memory into the result register
-        mips.add(String.format("lw %s, 0($at)", regRes));
+        // Load from calculated address
+        mips.add(String.format("lw %s,0($at)", regRes)); 
     }
 }

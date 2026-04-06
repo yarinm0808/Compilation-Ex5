@@ -13,6 +13,12 @@ public class AstArrayTypedef extends AstDec {
         this.arrayName = name;
         this.baseType = type;
     }
+    
+    @Override
+    public void printMe() {
+        System.out.print("AST NODE ARRAY TYPEDEF(" + arrayName + ")\n");
+        if (baseType != null) baseType.printMe();
+    }
 
     @Override
     public Type semantMe() {

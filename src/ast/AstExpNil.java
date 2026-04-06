@@ -23,7 +23,7 @@ public class AstExpNil extends AstExp
     public Type semantMe()
     {
         // You typically return a special TypeNil.getInstance() or TypeVoid.
-        return TypeVoid.getInstance(); 
+        return TypeNil.getInstance(); 
     }
 
     public Temp irMe() {

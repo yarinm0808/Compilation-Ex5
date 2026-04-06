@@ -21,7 +21,7 @@ public class AstExpVarSimple extends AstExpVar {
      * and used during irMe(). This prevents the "Symbol disappeared" 
      * error when the Symbol Table clears at the end of a scope.
      */
-    private SymbolTableEntry entry; 
+    protected SymbolTableEntry entry; 
 
     /******************/
     /* CONSTRUCTOR(S) */

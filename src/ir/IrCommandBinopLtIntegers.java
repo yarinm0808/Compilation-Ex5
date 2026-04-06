@@ -26,29 +26,12 @@ public class IrCommandBinopLtIntegers extends IrCommand
     @Override
     public void mipsMe(Map<Temp, String> regMap)
     {
-        // 1. Map virtual Temps to physical register strings
         String s1 = regMap.get(this.t1);
         String s2 = regMap.get(this.t2);
         String d  = regMap.get(this.dst);
 
-        // 2. Generate unique labels
-        String labelAssignOne = "label_assign_one_" + AstNodeSerialNumber.getFresh();
-        String labelEnd       = "label_lt_end_" + AstNodeSerialNumber.getFresh();
-        
-        // 3. Optimized Control Flow:
-        // if (s1 < s2) jump to assign 1
-        MipsGenerator.getInstance().blt(s1, s2, labelAssignOne);
-        
-        // Fall-through: if not less than, assign 0 and jump to end
-        MipsGenerator.getInstance().li(d, 0);
-        MipsGenerator.getInstance().jump(labelEnd);
-
-        // Label: Assign One
-        MipsGenerator.getInstance().label(labelAssignOne);
-        MipsGenerator.getInstance().li(d, 1);
-
-        // Label: End
-        MipsGenerator.getInstance().label(labelEnd);
+        // One single instruction replaces all the branching logic!
+        MipsGenerator.getInstance().slt(d, s1, s2);
     }
     
     @Override
