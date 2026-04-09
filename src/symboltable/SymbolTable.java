@@ -31,6 +31,8 @@ public class SymbolTable
     private int scopeLevel = 0; 
     
     public Type currentExpectedReturnType = null;
+    private int localVarCount = 0;
+    private boolean insideClass = false; // The new flag
 
     /**************************************************************/
     /* A standard hash function for strings                       */
@@ -86,6 +88,37 @@ public class SymbolTable
         }
         return null;
     }
+
+    /**
+     * Resets the local variable counter. 
+     * Call this at the START of every function's semantMe.
+     */
+    public void resetLocalVarIndex() {
+        this.localVarCount = 0;
+    }
+
+    /**
+     * Claims a unique index for a local variable and increments the counter.
+     */
+    public int allocateLocalVarIndex() {
+        return this.localVarCount++;
+    }
+
+    /**
+     * Identifies if we are currently inside a class body (scopeLevel 1)
+     * but NOT inside a function body (scopeLevel 2+).
+     */
+    public boolean isAtClassScope() {
+        return scopeLevel == 1;
+    }
+
+    /**
+     * Helper to get the current depth.
+     */
+    public int getScopeLevel() {
+        return scopeLevel;
+    }
+
 
     public Type find(String name)
     {
@@ -161,6 +194,9 @@ public class SymbolTable
         sb.append("----------------------------");
         return sb.toString();
     }
+
+    public void setInsideClass(boolean val) { this.insideClass = val; }
+    public boolean isInsideClass() { return this.insideClass; }
 
     /**************************************/
     /* USUAL SINGLETON IMPLEMENTATION ... */

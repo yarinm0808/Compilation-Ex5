@@ -21,7 +21,7 @@ public class IrCommandPush extends IrCommand {
     @Override
     public List<Temp> GetUsedTemps() {
         List<Temp> temps = new ArrayList<Temp>();
-        temps.add(this.ToPush);
+        if (this.ToPush != null) temps.add(this.ToPush);
         return temps;
     }
 

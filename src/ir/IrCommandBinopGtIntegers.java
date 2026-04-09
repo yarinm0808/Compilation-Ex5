@@ -1,19 +1,18 @@
 package ir;
 
-import temp.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import mips.*;
-import ast.*;
 
-public class IrCommandBinopLtIntegers extends IrCommand
-{
+import mips.MipsGenerator;
+import temp.Temp;
+
+public class IrCommandBinopGtIntegers extends IrCommand {
     public Temp t1;
     public Temp t2;
     public Temp dst;
 
-    public IrCommandBinopLtIntegers(Temp dst, Temp t1, Temp t2)
+    public IrCommandBinopGtIntegers(Temp dst, Temp t1, Temp t2)
     {
         this.dst = dst;
         this.t1 = t1;
@@ -31,7 +30,7 @@ public class IrCommandBinopLtIntegers extends IrCommand
         String d  = regMap.get(this.dst);
 
         // One single instruction replaces all the branching logic!
-        MipsGenerator.getInstance().slt(d, s1, s2);
+        MipsGenerator.getInstance().slt(d, s2, s1);
     }
     
     @Override

@@ -39,7 +39,7 @@ public class IrCommandPrintInt extends IrCommand
 	@Override
     public List<Temp> GetUsedTemps() {
         List<Temp> temps = new ArrayList<>();
-        temps.add(this.t);
+        if (this.t != null) temps.add(this.t);
         return temps;
     }
 

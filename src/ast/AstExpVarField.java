@@ -5,96 +5,85 @@ import temp.TempFactory;
 import types.*;
 import ir.*;
 
-public class AstExpVarField extends AstExpVar
-{
-	public AstExpVar var;
-	public String fieldName;
-	
-	/******************/
-	/* CONSTRUCTOR(S) */
-	/******************/
-	public AstExpVarField(AstExpVar var, String fieldName)
-	{
-		/******************************/
-		/* SET A UNIQUE SERIAL NUMBER */
-		/******************************/
-		serialNumber = AstNodeSerialNumber.getFresh();
+public class AstExpVarField extends AstExpVar {
+    public AstExpVar var;
+    public String fieldName;
 
-		System.out.format("====================== var -> var DOT ID( %s )\n",fieldName);
-		this.var = var;
-		this.fieldName = fieldName;
-	}
+    /**
+     * THE BRIDGE:
+     * This stores the class metadata we found during the Semantic phase.
+     * We use it during the IR phase to find offsets without re-searching the Symbol Table.
+     */
+    protected TypeClass cachedBaseClassType;
 
-	/*************************************************/
-	/* The printing message for a field var AST node */
-	/*************************************************/
-	public void printMe()
-	{
-		/*********************************/
-		/* AST NODE TYPE = AST FIELD VAR */
-		/*********************************/
-		System.out.format("FIELD\nNAME\n(___.%s)\n",fieldName);
+    /******************/
+    /* CONSTRUCTOR(S) */
+    /******************/
+    public AstExpVarField(AstExpVar var, String fieldName) {
+        serialNumber = AstNodeSerialNumber.getFresh();
+        this.var = var;
+        this.fieldName = fieldName;
+    }
 
-		/**********************************************/
-		/* RECURSIVELY PRINT VAR, then FIELD NAME ... */
-		/**********************************************/
-		if (var != null) var.printMe();
+    @Override
+    public void printMe() {
+        System.out.format("FIELD\nNAME\n(___.%s)\n", fieldName);
+        if (var != null) var.printMe();
 
-		/**********************************/
-		/* PRINT to AST GRAPHVIZ DOT file */
-		/**********************************/
-		AstGraphviz.getInstance().logNode(
+        AstGraphviz.getInstance().logNode(
                 serialNumber,
-			String.format("FIELD\nVAR\n___.%s",fieldName));
+                String.format("FIELD\nVAR\n___.%s", fieldName));
 
-		/****************************************/
-		/* PRINT Edges to AST GRAPHVIZ DOT file */
-		/****************************************/
-		if (var  != null) AstGraphviz.getInstance().logEdge(serialNumber,var.serialNumber);
-	}
+        if (var != null) AstGraphviz.getInstance().logEdge(serialNumber, var.serialNumber);
+    }
 
-	public Type semantMe() {
-		Type baseType = var.semantMe(); // var is 'p'
-		
-		// DEBUG: What did we get for 'p'?
-		System.out.println(">> [DEBUG] Field Access on '" + fieldName + "'. Base variable type is: " + 
-			(baseType != null ? baseType.getClass().getSimpleName() : "NULL"));
+    /*********************************/
+    /* SEMANTICS: The Research Phase */
+    /*********************************/
+    @Override
+    public Type semantMe() {
+        // 1. Resolve the base (e.g., 'l1' in 'l1.head')
+        Type baseType = var.semantMe();
 
-		if (!(baseType instanceof TypeClass)) {
-			throw new RuntimeException("ERROR(" + lineNumber + ")");
-		}
+        // 2. Validate that we are accessing a field of a Class
+        if (!(baseType instanceof TypeClass)) {
+            throw new RuntimeException("ERROR(" + lineNumber + "): Attempting field access on non-class type.");
+        }
 
-		TypeClass tc = (TypeClass) baseType;
-		Type fieldType = tc.findFieldType(fieldName);
-		
-		// DEBUG: Did we find the field?
-		System.out.println(">> [DEBUG] findFieldType('" + fieldName + "') result: " + 
-			(fieldType != null ? "FOUND" : "NOT FOUND"));
+        // 3. LOCK IN THE RESULT: Save the class metadata for the IR phase
+        this.cachedBaseClassType = (TypeClass) baseType;
 
-		if (fieldType == null) {
-			throw new RuntimeException("ERROR(" + lineNumber + ")");
-		}
-		
-		return fieldType;
-	}
+        // 4. Verify the field exists and return its type
+        Type fieldType = cachedBaseClassType.findFieldType(fieldName);
+        if (fieldType == null) {
+            throw new RuntimeException("ERROR(" + lineNumber + "): Field '" + fieldName + "' not found in class.");
+        }
 
-	public Temp irMe() {
-		// 1. Load the address of 'p' (this is our baseAddr)
-		Temp baseAddr = var.irMe();
+        return fieldType;
+    }
 
-		// 2. Add your Null Pointer Check (Mandatory for Ex 5!)
-		Ir.getInstance().AddIrCommand(new IrCommand_Check_Null_Ptr(baseAddr));
+    /*********************************/
+    /* IR: The Construction Phase   */
+    /*********************************/
+    @Override
+    public Temp irMe() {
+        // [1] Get the base address (Generate the 'l1' pointer)
+        // This calls var.irMe(), which uses the entry you cached in AstExpVarSimple
+        Temp baseAddr = var.irMe();
 
-		// 3. Get the memory offset of 'age'
-		TypeClass tc = (TypeClass) var.semantMe();
-		int offset = tc.findFieldOffset(fieldName);
+        // [2] Safety: Check for Null Pointer
+        Ir.getInstance().AddIrCommand(new IrCommand_Check_Null_Ptr(baseAddr));
 
-		// 4. Create destination Temp
-		Temp result = TempFactory.getInstance().getFreshTemp();
+        // [3] Use our cached bridge to find the field's offset
+        // We NO LONGER call var.semantMe() here!
+        int offset = cachedBaseClassType.findFieldOffset(fieldName);
 
-		// 5. Use the HEAP load command
-		Ir.getInstance().AddIrCommand(new IrCommandLoadField(result, baseAddr, offset));
+        // [4] Create destination Temp
+        Temp result = TempFactory.getInstance().getFreshTemp();
 
-		return result;
-	}
+        // [5] Load the field value from the heap
+        Ir.getInstance().AddIrCommand(new IrCommandLoadField(result, baseAddr, offset));
+
+        return result;
+    }
 }

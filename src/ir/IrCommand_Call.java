@@ -36,6 +36,9 @@ public class IrCommand_Call extends IrCommand {
     @Override
     public List<Temp> GetUsedTemps() {
         // A call "uses" every temporary passed as an argument
+        if (this.args == null) {
+            return new ArrayList<>();
+        }
         return new ArrayList<>(this.args);
     }
 

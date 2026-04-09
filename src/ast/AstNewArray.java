@@ -16,6 +16,12 @@ public class AstNewArray extends AstExp {
         this.size = size;
     }
 
+    public void printMe() {
+        System.out.print("NEW ARRAY\n");
+        if (type != null) type.printMe();
+        if (size != null) size.printMe();
+    }
+    
     @Override
     public Type semantMe() {
         // 1. Resolve the element type (e.g., int)

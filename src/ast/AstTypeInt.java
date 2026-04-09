@@ -11,6 +11,9 @@ public class AstTypeInt extends AstType{
         return TypeInt.getInstance();
     }
 
+    public void printMe(){
+        System.out.println(String.format("AST Type Int"));
+    }
     public String toString() { return "int"; }
     public String getTypeName(){
         return "int";

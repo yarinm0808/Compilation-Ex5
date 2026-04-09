@@ -12,10 +12,10 @@ public class SymbolTableEntry
     public int prevtopIndex;
     public int lineNumber;
     public int offset; 
-    
-    // NEW: Added scopeLevel to distinguish Global (0) from Local (>0)
+
     public int scopeLevel;
     public boolean isParameter; 
+    public boolean isField = false;
 
     public SymbolTableEntry(
         String name,
@@ -25,7 +25,7 @@ public class SymbolTableEntry
         SymbolTableEntry prevtop,
         int prevtopIndex,
         int lineNumber,
-        int scopeLevel) // Added parameter here
+        int scopeLevel) 
     {
         this.index = index;
         this.name = name;
@@ -41,6 +41,11 @@ public class SymbolTableEntry
     public void markAsParameter() {
         this.isParameter = true;
     }
+
+    public void markAsField() {
+        this.isField = true;
+    }
+    
     public void setOffset(int offset) {
         this.offset = offset;
     }

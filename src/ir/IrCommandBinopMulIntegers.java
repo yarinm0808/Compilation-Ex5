@@ -42,8 +42,8 @@ public class IrCommandBinopMulIntegers extends IrCommand
 	@Override
     public List<Temp> GetUsedTemps() {
         List<Temp> temps = new ArrayList<Temp>();
-        temps.add(this.t1);
-		temps.add(this.t2);
+        if (this.t1 != null) temps.add(this.t1);
+		if (this.t2 != null) temps.add(this.t2);
         return temps;
     }
     @Override

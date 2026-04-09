@@ -40,9 +40,9 @@ public class IrCommandStoreSubscript extends IrCommand {
     public List<Temp> GetUsedTemps() {
         List<Temp> temps = new ArrayList<Temp>();
         // FIX: You MUST add 'base' here!
-        temps.add(this.base); 
-        temps.add(this.idx);
-        temps.add(this.val);
+        if (this.base != null) temps.add(this.base); 
+        if (this.idx != null) temps.add(this.idx);
+        if (this.val != null) temps.add(this.val);
         return temps;
     }
 

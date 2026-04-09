@@ -46,7 +46,7 @@ public class IRcommandConstInt extends IrCommand
     @Override
     public List<Temp> GetDefTemps(){
         List<Temp> temps = new ArrayList<Temp>();
-		temps.add(this.t);
+		if (this.t != null) temps.add(this.t);
 		return temps;
     }
 }

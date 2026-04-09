@@ -42,14 +42,14 @@ public class IrCommandNewArray extends IrCommand{
     @Override
     public List<Temp> GetUsedTemps() {
         ArrayList<Temp> res = new ArrayList<Temp>();
-        res.add(this.length);
+        if (this.length != null) res.add(this.length);
         return res;
     }
 
     @Override
     public List<Temp> GetDefTemps() {
         ArrayList<Temp> res = new ArrayList<Temp>();
-        res.add(this.dst);
+        if (this.dst != null) res.add(this.dst);
         return res;
     }
     

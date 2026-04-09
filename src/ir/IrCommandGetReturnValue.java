@@ -26,7 +26,7 @@ public class IrCommandGetReturnValue extends IrCommand {
     @Override
     public List<Temp> GetDefTemps() {
         List<Temp> temps = new ArrayList<Temp>();
-        temps.add(this.res);
+        if (this.res != null) temps.add(this.res);
         return temps;
     }
     

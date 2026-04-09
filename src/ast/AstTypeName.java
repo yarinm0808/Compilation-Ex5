@@ -23,16 +23,14 @@ public class AstTypeName extends AstNode {
 
     @Override
     public Type semantMe() {
-        // CHANGE: Delegate the lookup to the type node
+        // Just resolve the type, DO NOT call enter()
         Type t = typeNode.semantMe();
         
         if (t == null) {
-            System.out.format(">> ERROR: non existing type\n");
-            // Instead of exit(0), usually return TypeInt as a fallback
-            return TypeInt.getInstance(); 
+            throw new RuntimeException("ERROR(" + lineNumber + "): non existing type");
         }
         
-        this.entry = SymbolTable.getInstance().enter(name, t);
+        // We return the type so the caller (like AstDecFunc) can use it
         return t;
     }
 }

@@ -28,8 +28,8 @@ public class IrCommand_Check_Array_Bounds extends IrCommand{
     @Override
     public List<Temp> GetUsedTemps() {
         List<Temp> temps = new ArrayList<>();
-        temps.add(this.ArrayPointer);
-        temps.add(this.index);
+        if (this.ArrayPointer != null) temps.add(this.ArrayPointer);
+        if (this.index != null) temps.add(this.index);
         return temps;
     }
 

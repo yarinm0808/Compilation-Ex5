@@ -24,7 +24,7 @@ public class IrCommandReturnVal extends IrCommand {
     @Override
     public List<Temp> GetUsedTemps() {
         List<Temp> temps = new ArrayList<Temp>();
-        temps.add(this.valTemp);
+        if (this.valTemp != null) temps.add(this.valTemp);
         return temps;
     }
 

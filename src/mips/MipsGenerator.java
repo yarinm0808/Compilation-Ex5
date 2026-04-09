@@ -142,6 +142,10 @@ public class MipsGenerator
 	public void JumpReturn(){
 		fileWriter.format("\tjr $ra\n");
 	}
+	public void move_v0_to_reg(String targetReg) {
+    	// Moves the result of a function call ($v0) into a temporary register
+    	fileWriter.format("\tmove %s, $v0\n", targetReg);
+	}
 
 	public void Move(String DstReg, String target){
         fileWriter.format("\tmove %s, %s\n", DstReg, target);
@@ -197,12 +201,44 @@ public class MipsGenerator
 		fileWriter.println("\taddu $sp, $sp, 8");
 	}
 
+	public void load_byte(String dst, String base, int offset) {
+		// Generates: lb $target, offset($base)
+		fileWriter.format("\tlb %s, %d(%s)\n", dst, offset, base);
+	}
+
+	public void store_byte(String src, String base, int offset) {
+		// Generates: sb $source, offset($base)
+		fileWriter.format("\tsb %s, %d(%s)\n", src, offset, base);
+	}
+
 	public void add(String dst, String oprnd1, String oprnd2)
 	{
 		String upperCheck = "upper_" + AstNodeSerialNumber.getFresh();
 		String done = "done_" + AstNodeSerialNumber.getFresh();
 
 		fileWriter.format("\taddu %s,%s,%s\n", dst, oprnd1, oprnd2);
+		
+		// Check upper bound: 32767 
+		fileWriter.format("\tli $v1, 32767\n");
+		fileWriter.format("\tble %s, $v1, %s\n", dst, upperCheck);
+		fileWriter.format("\tmove %s, $v1\n", dst);
+		fileWriter.format("\tj %s\n", done);
+
+		fileWriter.format("%s:\n", upperCheck);
+		// Check lower bound: -32768 
+		fileWriter.format("\tli $v1, -32768\n");
+		fileWriter.format("\tbge %s, $v1, %s\n", dst, done);
+		fileWriter.format("\tmove %s, $v1\n", dst);
+
+		fileWriter.format("%s:\n", done);
+	}
+
+	public void addi(String dst, String oprnd1, int imm)
+	{
+		String upperCheck = "upper_" + AstNodeSerialNumber.getFresh();
+		String done = "done_" + AstNodeSerialNumber.getFresh();
+
+		fileWriter.format("\taddu %s,%s,%d\n", dst, oprnd1, imm);
 		
 		// Check upper bound: 32767 
 		fileWriter.format("\tli $v1, 32767\n");
@@ -329,13 +365,20 @@ public class MipsGenerator
 		fileWriter.format("%s:\n", label_ok);
 	}
 
+	public void addiu(String dst, String src, int imm){
+		fileWriter.format("\taddiu %s, %s, %d\n",dst, src, imm);
+	}
+
 	public void allocateString(String varName, String content) {
 		System.out.println("[DEBUG] Writing to File: .data " + varName + " : .asciiz " + content);
-		fileWriter.println("\n.data");               // Flicker to data
+		fileWriter.println("\n.data"); 
 		String strLabel = varName + "_str";
-		fileWriter.format("%s: .asciiz %s\n", strLabel, content);
+		
+		// Use \" to wrap the content in double quotes for MIPS
+		fileWriter.format("%s: .asciiz \"%s\"\n", strLabel, content);
+		
 		fileWriter.format("%s: .word %s\n", varName, strLabel);
-		fileWriter.println(".text");                 // Flicker back to text
+		fileWriter.println(".text");
 		fileWriter.flush();
 	}
 	public void printString(String regName) {

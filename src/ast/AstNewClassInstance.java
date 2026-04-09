@@ -40,11 +40,52 @@ public class AstNewClassInstance extends AstExp {
         return t;
     }
 
+    @Override
     public Temp irMe() {
+        // 1. Calculate size and allocate memory
         int sizeInBytes = cachedType.getFieldCount() * 4;
         Temp addressTemp = TempFactory.getInstance().getFreshTemp();
+        
+        // Generates the 'malloc' syscall (or your internal malloc)
         Ir.getInstance().AddIrCommand(new IrCommand_Malloc(addressTemp, sizeInBytes));
+
+        // 2. TRIGGER INITIALIZATION
+        // We pass the new object's address and the class type to our helper
+        generateFieldInitializers(addressTemp, cachedType);
+
         return addressTemp;
+    }
+
+    /**
+     * Recursive helper to initialize fields from the root father down to the child
+     */
+    private void generateFieldInitializers(Temp objectAddr, TypeClass currentClass) {
+        // [A] Base Case: If there's a father, initialize his fields first
+        if (currentClass.father != null) {
+            generateFieldInitializers(objectAddr, currentClass.father);
+        }
+
+        // [B] Initialize this class's local fields
+        // Loop through the data members of the current class level
+        for (TypeList it = currentClass.data_members; it != null; it = it.tail) {
+            if (it.head instanceof TypeClassVarDec) {
+                TypeClassVarDec vd = (TypeClassVarDec) it.head;
+
+                // Does this field have an initial value expression (e.g., ':= 10')?
+                // NOTE: You must ensure TypeClassVarDec stores the initialValue AST node!
+                if (vd.initExp != null) {
+                    // 1. Evaluate the expression (e.g., generate the code for '10')
+                    Temp valTemp = vd.initExp.irMe();
+
+                    // 2. Get the field's offset in the object
+                    int offset = currentClass.findFieldOffset(vd.name);
+
+                    // 3. Store the value into the heap at that offset
+                    // Generates: sw $valTemp, offset($addressTemp)
+                    Ir.getInstance().AddIrCommand(new IrCommandStoreField(objectAddr, offset, valTemp));
+                }
+            }
+        }
     }
 
 }

@@ -49,7 +49,7 @@ public class IrCommandStore extends IrCommand
 	@Override
     public List<Temp> GetUsedTemps() {
         List<Temp> temps = new ArrayList<>();
-        temps.add(this.src);
+        if (this.src != null) temps.add(this.src);
         return temps;
     }
 

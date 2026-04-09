@@ -11,6 +11,9 @@ public class AstTypeString extends AstType {
         return TypeString.getInstance();
     }
 
+    public void printMe(){
+        System.out.println(String.format("AST Type String"));
+    }
     public String toString() { return "string"; }
 
     public String getTypeName(){

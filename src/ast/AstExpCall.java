@@ -51,38 +51,79 @@ public class AstExpCall extends AstExp
 
     @Override
     public Type semantMe() {
-        // 1. If it's a method call (base != null), you must check the class scope
+        TypeFunction funcType = null;
+
+        // 1. Resolve the Function/Method Signature
         if (base != null) {
+            // Method Call: moish.getAverage()
             Type baseType = base.semantMe();
+            System.out.println(">> [DEBUG] Method Call: " + funcName + " on object of type: " + baseType);
             if (!(baseType instanceof TypeClass)) {
-                throw new RuntimeException("ERROR(" + lineNumber + "): method call on non-class type.");
+                throw new RuntimeException("ERROR(" + lineNumber + "): Cannot call method on non-class type");
             }
-            // Logic to find funcName inside baseType goes here...
-            // For now, let's assume global resolution or simple class methods
+            
+            // Find the method in the class hierarchy (including father classes)
+            Type member = ((TypeClass) baseType).findFieldType(funcName);
+            if (!(member instanceof TypeFunction)) {
+                throw new RuntimeException("ERROR(" + lineNumber + "): Method " + funcName + " not found");
+            }
+            funcType = (TypeFunction) member;
+        } else {
+            // Global Call: PrintInt(10)
+            SymbolTableEntry entry = SymbolTable.getInstance().findEntry(funcName);
+            if (entry == null || !(entry.type instanceof TypeFunction)) {
+                throw new RuntimeException("ERROR(" + lineNumber + "): Function " + funcName + " not defined");
+            }
+            funcType = (TypeFunction) entry.type;
         }
 
-        SymbolTableEntry funcEntry = SymbolTable.getInstance().findEntry(funcName);
-        if (funcEntry == null || !(funcEntry.type instanceof TypeFunction)) {
-            throw new RuntimeException("ERROR(" + lineNumber + ")");
+        // 2. Validate Parameters
+        AstExpList itActual = params;  // The values passed: (96, 100, ...)
+        TypeList itFormal = funcType.params; // The required types: (int, int, ...)
+
+        while (itActual != null && itFormal != null) {
+            Type tActual = itActual.head.semantMe();
+            Type tFormal = itFormal.head;
+
+            // --- THE NEW CHECK ---
+            // Ask the formal type: "Is this actual value compatible with you?"
+            if (!tFormal.isCompatible(tActual)) {
+                throw new RuntimeException("ERROR(" + lineNumber + "): Parameter type mismatch for " + funcName);
+            }
+
+            itActual = itActual.tail;
+            itFormal = itFormal.tail;
         }
-        
-        TypeFunction funcType = (TypeFunction) funcEntry.type;
-        for (AstExpList it = params; it != null; it = it.tail) {
-            it.head.semantMe(); 
+
+        // 3. Check for Argument Count Mismatch
+        if (itActual != null || itFormal != null) {
+            throw new RuntimeException("ERROR(" + lineNumber + "): Wrong number of arguments for " + funcName);
         }
 
         return funcType.returnType;
     }
 
     public Temp irMe() {
-        // [Part 4 Fix] Mandatory Nil Check for Method Calls
+        // 1. Evaluate the base (the object) if it's a method call
+        Temp baseAddr = null;
+        String callLabel = "func_" + funcName; // Default for global functions
+
         if (base != null) {
-            Temp baseAddr = base.irMe();
-            // This is the core of Exercise 5:
+            baseAddr = base.irMe();
             Ir.getInstance().AddIrCommand(new IrCommand_Check_Null_Ptr(baseAddr));
+            
+            // Use the Type metadata to find the CORRECT class label
+            TypeClass tc = (TypeClass) base.semantMe();
+            Type member = tc.findFieldType(funcName);
+            
+            if (member instanceof TypeFunction) {
+                TypeFunction tf = (TypeFunction) member;
+                // This pulls 'Person' if inherited, or 'Student' if overridden
+                callLabel = tf.definingClassName + "_" + funcName;
+            }
         }
 
-        // Standard Call Logic
+        // 2. Standard Call Logic for Built-ins
         if (funcName.equals("PrintInt")) {
             Temp argTemp = params.head.irMe();
             Ir.getInstance().AddIrCommand(new IrCommandPrintInt(argTemp)); 
@@ -95,13 +136,24 @@ public class AstExpCall extends AstExp
             return null;
         }
 
+        // 3. Collect Arguments
         List<Temp> argTemps = new ArrayList<>();
+        
+        // --- THE HIDDEN PARAMETER ---
+        // If it's a method call, 'this' (baseAddr) must be the FIRST argument
+        if (baseAddr != null) {
+            argTemps.add(baseAddr);
+        }
+
         for (AstExpList it = params; it != null; it = it.tail) {
             argTemps.add(it.head.irMe());
         }
 
+        // 4. Generate the Call
         Temp result = TempFactory.getInstance().getFreshTemp();
-        Ir.getInstance().AddIrCommand(new IrCommand_Call(result, "func_" + funcName, argTemps));
+        
+        // Use the potentially mangled callLabel
+        Ir.getInstance().AddIrCommand(new IrCommand_Call(result, callLabel, argTemps));
         
         return result;
     }

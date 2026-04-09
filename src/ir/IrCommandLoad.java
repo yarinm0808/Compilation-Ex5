@@ -42,7 +42,7 @@ public class IrCommandLoad extends IrCommand
 	@Override
     public List<Temp> GetDefTemps() {
         List<Temp> temps = new ArrayList<>();
-        temps.add(this.dst);
+        if (this.dst != null) temps.add(this.dst);
         return temps;
     }
 	

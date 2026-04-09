@@ -12,22 +12,29 @@ public class TypeClass extends Type {
     }
 
     public Type findFieldType(String fieldName) {
-        // 1. Iterate through the data members
+        System.out.println(">> [DEBUG] Searching for '" + fieldName + "' in class: " + name);
         for (TypeList it = data_members; it != null; it = it.tail) {
-            // Check if the head of the list is our new VarDec bridge
             if (it.head instanceof TypeClassVarDec) {
                 TypeClassVarDec vd = (TypeClassVarDec) it.head;
                 if (vd.name.equals(fieldName)) {
-                    return vd.t; // Found it! Return the Type (e.g., TypeInt)
+                    System.out.println("   [MATCH] Field '" + fieldName + "' found in " + name);
+                    return vd.t;
+                }
+            }
+            if (it.head instanceof TypeFunction) {
+                TypeFunction tf = (TypeFunction) it.head;
+                if (tf.name.equals(fieldName)) {
+                    System.out.println("   [MATCH] Method '" + fieldName + "' found in " + name);
+                    return tf;
                 }
             }
         }
-
-        // 2. Check the father if not found here (Inheritance)
-        if (father != null) {
+        if (father != null){
+            System.out.println("   [NOT FOUND] climbing to father: " + father.name);
             return father.findFieldType(fieldName);
         }
-
+        
+        System.out.println("   [FAIL] '" + fieldName + "' not found in hierarchy.");
         return null;
     }
     
@@ -73,5 +80,18 @@ public class TypeClass extends Type {
             }
         }
         return -1; // Should not happen if semantMe passed
+    }
+
+    /**
+     * Checks if 'potentialChild' is a subclass of 'this' (the current class).
+     */
+    public boolean isMyChild(TypeClass potentialChild) {
+        TypeClass curr = potentialChild;
+        while (curr != null) {
+            // Check by name or reference
+            if (curr.name.equals(this.name)) return true;
+            curr = curr.father;
+        }
+        return false;
     }
 }

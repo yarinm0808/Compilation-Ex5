@@ -1,5 +1,10 @@
 package ast;
 
+import ir.Ir;
+import ir.IrCommandLoad;
+import mips.MipsGenerator;
+import temp.Temp;
+import temp.TempFactory;
 import types.*;
 
 public class AstExpString extends AstExp
@@ -42,4 +47,29 @@ public class AstExpString extends AstExp
 	{
 		return TypeString.getInstance();
 	}
+
+	@Override
+    public Temp irMe() {
+        // 1. Generate a unique label for this specific literal
+        String label = "string_lit_" + serialNumber;
+
+        // 2. Clean the string. Lexers often include the surrounding quotes.
+        // Since your allocateString adds escaped quotes (\"), we strip them here
+        // to avoid getting ""Having"" in MIPS.
+        String cleanValue = value;
+        if (cleanValue.startsWith("\"") && cleanValue.endsWith("\"")) {
+            cleanValue = cleanValue.substring(1, cleanValue.length() - 1);
+        }
+
+        // 3. Drop the string into the MIPS .data section
+        MipsGenerator.getInstance().allocateString(label, cleanValue);
+
+        // 4. Create a Temp and issue a definition command
+        // This is the "Define" step. Because of this, the allocator 
+        // will give 't' a real register like $t0 instead of 'null'.
+        Temp t = TempFactory.getInstance().getFreshTemp();
+        Ir.getInstance().AddIrCommand(new IrCommandLoad(t, label, 0));
+
+        return t;
+    }
 }

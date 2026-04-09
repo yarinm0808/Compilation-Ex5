@@ -26,7 +26,7 @@ public class IrCommandMoveToA0 extends IrCommand {
     public List<Temp> GetUsedTemps() {
         // We are reading from this Temp, so it's "Used"
         List<Temp> temps = new ArrayList<>();
-        temps.add(src);
+        if (this.src != null) temps.add(src);
         return temps;
     }
 

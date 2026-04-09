@@ -31,8 +31,8 @@ public class IrCommandStoreField extends IrCommand {
     @Override
     public List<Temp> GetUsedTemps() {
         List<Temp> temps = new ArrayList<Temp>();
-        temps.add(this.baseAddr);
-        temps.add(this.value);
+        if (this.baseAddr != null) temps.add(this.baseAddr);
+        if (this.value != null) temps.add(this.value);
         return temps;
     }
 

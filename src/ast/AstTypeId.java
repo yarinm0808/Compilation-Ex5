@@ -19,6 +19,10 @@ public class AstTypeId extends AstType{
         return t;
     }
 
+    public void printMe(){
+        System.out.println(String.format("AST Type Id with name: %s", this.name));
+    }
+
     @Override
     public String toString() { return this.name; }
 

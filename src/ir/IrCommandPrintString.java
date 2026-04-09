@@ -22,7 +22,7 @@ public class IrCommandPrintString extends IrCommand {
     @Override
     public List<Temp> GetUsedTemps() {
         List<Temp> temps = new ArrayList<Temp>();
-        temps.add(this.StrAddrTemp);
+        if (this.StrAddrTemp != null) temps.add(this.StrAddrTemp);
         return temps;
     }
 

@@ -30,7 +30,7 @@ public class IrCommand_Malloc extends IrCommand{
     @Override
     public List<Temp> GetDefTemps() {
         List<Temp> temps = new ArrayList<Temp>();
-        temps.add(this.addressTemp);
+        if (this.addressTemp != null) temps.add(this.addressTemp);
         return temps;
     }
     

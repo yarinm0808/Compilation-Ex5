@@ -38,15 +38,15 @@ public class IrCommandBinopDivIntegers extends IrCommand {
     @Override
     public List<Temp> GetUsedTemps() {
         List<Temp> temps = new ArrayList<>();
-        temps.add(this.rs);
-        temps.add(this.rt);
+        if (this.rs != null) temps.add(this.rs);
+        if (this.rt != null) temps.add(this.rt);
         return temps;
     }
 
     @Override
     public List<Temp> GetDefTemps() {
         List<Temp> temps = new ArrayList<>();
-        temps.add(this.dst);
+        if (this.dst != null) temps.add(this.dst);
         return temps;
     }
 }

@@ -2,6 +2,10 @@ package ast;
 
 import types.*;
 import temp.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import ir.*;
 
 public class AstExpBinop extends AstExp
@@ -9,6 +13,8 @@ public class AstExpBinop extends AstExp
 	int op;
 	public AstExp left;
 	public AstExp right;
+	private Type leftType;
+	private Type rightType;
 	
 	/******************/
 	/* CONSTRUCTOR(S) */
@@ -75,30 +81,31 @@ public class AstExpBinop extends AstExp
 		if (right != null) AstGraphviz.getInstance().logEdge(serialNumber,right.serialNumber);
 	}
 
+	@Override
 	public Type semantMe() {
-		Type t1 = (left != null)  ? left.semantMe()  : null;
-		Type t2 = (right != null) ? right.semantMe() : null;
+		this.leftType = (left != null) ? left.semantMe() : null;
+		this.rightType = (right != null) ? right.semantMe() : null;
 
-		// 1. Both are Integers (e.g., 5 + 6 or i < 10)
-		if (t1 == TypeInt.getInstance() && t2 == TypeInt.getInstance()) {
+		// 1. Both are Integers
+		if (leftType == TypeInt.getInstance() && rightType == TypeInt.getInstance()) {
 			return TypeInt.getInstance();
 		}
 
-		// 2. Pointer Equality (e.g., l1 = nil or l1 = l2)
-		// We only allow this for the Equality operator (op == 6)
-		if (op == 6) {
-			// Rule A: Comparing two pointers of the EXACT same class
-			if (t1 == t2) return TypeInt.getInstance();
+		// 2. Both are Strings (Concatenation)
+		if (leftType == TypeString.getInstance() && rightType == TypeString.getInstance() && this.op == 0) {
+			return TypeString.getInstance();
+		}
 
-			// Rule B: Comparing any Class pointer to 'nil'
-			if ((t1 instanceof TypeClass && t2 instanceof TypeNil) ||
-				(t1 instanceof TypeNil && t2 instanceof TypeClass)) {
+		// 3. Pointer Equality (op == 6)
+		if (op == 6) {
+			if (leftType == rightType) return TypeInt.getInstance();
+			if ((leftType instanceof TypeClass && rightType instanceof TypeNil) ||
+				(leftType instanceof TypeNil && rightType instanceof TypeClass)) {
 				return TypeInt.getInstance();
 			}
 		}
 
-		// If we reach here, it's a real error
-		throw new RuntimeException(">> ERROR: Type mismatch in Binary Operation: " + t1 + " and " + t2);
+		throw new RuntimeException(">> ERROR: Type mismatch in Binary Operation");
 	}
 
 	public Temp irMe()
@@ -109,6 +116,14 @@ public class AstExpBinop extends AstExp
 
 		if (left  != null) t1 = left.irMe();
 		if (right != null) t2 = right.irMe();
+
+		// STRING CONCATENATION LOGIC
+		if (leftType == TypeString.getInstance() && rightType == TypeString.getInstance() && op == 0) {
+			// We "fake" a call to a MIPS library function called 'string_concat'
+			// You should have a command like IrCommand_Call or IrCommand_Function_Call
+			Ir.getInstance().AddIrCommand(new IrCommandBinopConcatStrings(dst, t1, t2));
+			return dst;
+		}
 
 		if (op == 0)
 		{
@@ -141,6 +156,10 @@ public class AstExpBinop extends AstExp
 		if (op == 4) { 
 			System.out.println("[DEBUG] op:" + op +" bin operation is LT");
 			Ir.getInstance().AddIrCommand(new IrCommandBinopLtIntegers(dst, t1, t2));
+		}
+		if (op == 5){
+			System.out.println("[DEBUG] op:\" + op +\" bin operation is GT");
+			Ir.getInstance().AddIrCommand(new IrCommandBinopGtIntegers(dst, t1, t2));
 		}
 		if (op == 6)
 		{

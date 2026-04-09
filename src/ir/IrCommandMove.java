@@ -29,7 +29,7 @@ public class IrCommandMove extends IrCommand {
     @Override
     public List<Temp> GetDefTemps() {
         List<Temp> temps = new ArrayList<Temp>();
-        temps.add(this.DstReg);
+        if (this.DstReg != null) temps.add(this.DstReg);
         return temps;
     }
     

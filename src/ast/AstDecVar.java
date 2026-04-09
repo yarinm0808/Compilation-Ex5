@@ -50,23 +50,51 @@ public class AstDecVar extends AstDec {
     /*********************************/
     @Override
     public Type semantMe() {
-        // 1. Resolve the type
+        // 1. Resolve the type node (e.g., 'int' or 'Person')
         Type t = type.semantMe();
-        System.out.println(">> [DEBUG] Declaring var: " + name + " of type: " + (t != null ? t.getClass().getSimpleName() : "NULL"));
-
-        // 2. Collision Check in current scope
+        
+        // 2. COLLISION CHECK: Ensure we aren't re-declaring in the same scope
         if (SymbolTable.getInstance().findInCurrentScope(name) != null) {
-            throw new RuntimeException("ERROR(" + lineNumber + "): variable " + name + " already defined in scope.");
+            throw new RuntimeException("ERROR(" + lineNumber + "): variable " + name + " already defined.");
         }
 
-        // 3. Register in Symbol Table and capture the entry
-        // This entry now contains the scopeLevel (0 for global, >0 for local)
+        // 3. Register in Symbol Table
+        // The entry captures the name and type, and we'll tag it for IR below
         this.entry = SymbolTable.getInstance().enter(name, t);
 
-        // 4. Initial Value Semantics
+        // 4. COORDINATE ALLOCATION (The MIPS Handshake)
+        int level = SymbolTable.getInstance().getScopeLevel();
+        boolean insideClass = SymbolTable.getInstance().isInsideClass();
+
+        if (level == 0) {
+            // GLOBAL SCOPE
+            this.entry.isField = false;
+            this.entry.isParameter = false;
+        } 
+        else if (insideClass && level == 1) {
+            // CLASS FIELD SCOPE
+            // Marked as field so IR knows to use the 'this' pointer + heap offset
+            this.entry.isField = true;
+            this.entry.isParameter = false;
+            // Note: Specific heap offsets (0, 4, 8) are set by AstDecClass's loop
+        } 
+        else {
+            // LOCAL SCOPE (Inside a Function, Method, If, or While)
+            // Marked as local so IR knows to use the stack (-44, -48...)
+            this.entry.isField = false;
+            this.entry.isParameter = false;
+            
+            // Claim a unique index for this function's stack frame
+            int uniqueIndex = SymbolTable.getInstance().allocateLocalVarIndex();
+            this.entry.setOffset(uniqueIndex);
+        }
+
+        // 5. Initial Value Semantics (moish.age := 10)
         if (initialValue != null) {
             Type initType = initialValue.semantMe();
-            // Optional: Add type compatibility check here (initType vs t)
+            
+            // Optional: Check if initType is compatible with t
+            // if (!t.isCompatibleWith(initType)) { ... error ... }
         }
 
         return t;

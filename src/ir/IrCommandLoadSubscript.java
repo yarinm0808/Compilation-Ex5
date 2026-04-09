@@ -21,8 +21,8 @@ public class IrCommandLoadSubscript extends IrCommand {
     public List<Temp> GetUsedTemps() {
         List<Temp> temps = new ArrayList<Temp>();
         // We need the base pointer and the index value to calculate the address
-        temps.add(this.base);
-        temps.add(this.idx);
+        if (this.base != null) temps.add(this.base);
+        if (this.idx != null) temps.add(this.idx);
         return temps;
     }
     
@@ -30,7 +30,7 @@ public class IrCommandLoadSubscript extends IrCommand {
     public List<Temp> GetDefTemps() {
         List<Temp> temps = new ArrayList<Temp>();
         // The result of the load goes into this temp
-        temps.add(this.res);
+        if (this.res != null) temps.add(this.res);
         return temps;
     }
     

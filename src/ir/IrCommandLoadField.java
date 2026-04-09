@@ -19,14 +19,14 @@ public class IrCommandLoadField extends IrCommand {
     @Override
     public List<Temp> GetUsedTemps() {
         List<Temp> temps = new ArrayList<>();
-        temps.add(this.baseAddr); // This USES the temp, allowing it to "die"
+        if (this.baseAddr != null) temps.add(this.baseAddr); // This USES the temp, allowing it to "die"
         return temps;
     }
 
     @Override
     public List<Temp> GetDefTemps() {
         List<Temp> temps = new ArrayList<>();
-        temps.add(this.dst);
+        if (this.dst != null) temps.add(this.dst);
         return temps;
     }
 
