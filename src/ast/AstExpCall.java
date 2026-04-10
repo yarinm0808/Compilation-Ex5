@@ -103,58 +103,71 @@ public class AstExpCall extends AstExp
         return funcType.returnType;
     }
 
+    @Override
     public Temp irMe() {
-        // 1. Evaluate the base (the object) if it's a method call
-        Temp baseAddr = null;
-        String callLabel = "func_" + funcName; // Default for global functions
-
-        if (base != null) {
-            baseAddr = base.irMe();
-            Ir.getInstance().AddIrCommand(new IrCommand_Check_Null_Ptr(baseAddr));
-            
-            // Use the Type metadata to find the CORRECT class label
-            TypeClass tc = (TypeClass) base.semantMe();
-            Type member = tc.findFieldType(funcName);
-            
-            if (member instanceof TypeFunction) {
-                TypeFunction tf = (TypeFunction) member;
-                // This pulls 'Person' if inherited, or 'Student' if overridden
-                callLabel = tf.definingClassName + "_" + funcName;
-            }
-        }
-
-        // 2. Standard Call Logic for Built-ins
-        if (funcName.equals("PrintInt")) {
-            Temp argTemp = params.head.irMe();
-            Ir.getInstance().AddIrCommand(new IrCommandPrintInt(argTemp)); 
-            return null; 
-        }
-        
-        if (funcName.equals("PrintString")) { 
-            Temp addr = params.head.irMe();
-            Ir.getInstance().AddIrCommand(new IrCommandPrintString(addr));
-            return null;
-        }
-
-        // 3. Collect Arguments
+        // 1. Resolve arguments first (Left-to-Right evaluation)
         List<Temp> argTemps = new ArrayList<>();
-        
-        // --- THE HIDDEN PARAMETER ---
-        // If it's a method call, 'this' (baseAddr) must be the FIRST argument
-        if (baseAddr != null) {
-            argTemps.add(baseAddr);
-        }
-
         for (AstExpList it = params; it != null; it = it.tail) {
             argTemps.add(it.head.irMe());
         }
 
-        // 4. Generate the Call
+        // 2. Standard Call Logic for Built-ins
+        // Note: These don't return a value in the L language
+        if (funcName.equals("PrintInt")) {
+            Ir.getInstance().AddIrCommand(new IrCommandPrintInt(argTemps.get(0))); 
+            return null; 
+        }
+        if (funcName.equals("PrintString")) { 
+            Ir.getInstance().AddIrCommand(new IrCommandPrintString(argTemps.get(0)));
+            return null;
+        }
+
         Temp result = TempFactory.getInstance().getFreshTemp();
-        
-        // Use the potentially mangled callLabel
-        Ir.getInstance().AddIrCommand(new IrCommand_Call(result, callLabel, argTemps));
-        
-        return result;
+
+        // 3. DISTINGUISH: Virtual Method Call vs. Global Function
+        if (base != null) {
+            // --- VIRTUAL DISPATCH (Dynamic) ---
+            
+            // A. Get the object address (the 'base')
+            Temp baseAddr = base.irMe();
+            
+            // B. Safety First: Null Pointer Check
+            Ir.getInstance().AddIrCommand(new IrCommand_Check_Null_Ptr(baseAddr));
+            
+            // C. Use the Type metadata to find the fixed VMT OFFSET
+            // Assuming your AstNode has a method to get its semant-resolved type
+            TypeClass tc = (TypeClass) base.semantMe();
+            int methodOffset = tc.findMethodOffset(funcName); 
+            System.out.println(">> [IR CALL] Method: " + funcName + " | VMT Offset: " + methodOffset);
+            // D. Runtime lookup
+            Temp vmtPtr = TempFactory.getInstance().getFreshTemp();
+            Temp funcAddr = TempFactory.getInstance().getFreshTemp();
+
+            // [RUNTIME] vmtPtr = lw 0(baseAddr) -> Load VMT Pointer
+            // We use LoadFromRegister to avoid refactoring your old Load command
+            Ir.getInstance().AddIrCommand(new IrCommandLoadFromRegister(vmtPtr, baseAddr, 0));
+            
+            // [RUNTIME] funcAddr = lw methodOffset(vmtPtr) -> Load Function Address
+            Ir.getInstance().AddIrCommand(new IrCommandLoadFromRegister(funcAddr, vmtPtr, methodOffset));
+
+            // E. Prepare Arguments: 'this' pointer (baseAddr) MUST be the 1st parameter
+            List<Temp> virtualArgs = new ArrayList<>();
+            virtualArgs.add(baseAddr);   // The 'hidden' this pointer
+            virtualArgs.addAll(argTemps); // The actual parameters
+
+            // F. PERFORM THE CALL VIA REGISTER (jalr)
+            Ir.getInstance().AddIrCommand(new IrCommandVirtualCall(result, funcAddr, virtualArgs));
+            
+            return result;
+
+        } else {
+            // --- STATIC DISPATCH (Global / Standalone) ---
+            String callLabel = "func_" + funcName;
+            
+            // Standard call uses 'jal func_name'
+            Ir.getInstance().AddIrCommand(new IrCommand_Call(result, callLabel, argTemps));
+            
+            return result;
+        }
     }
 }

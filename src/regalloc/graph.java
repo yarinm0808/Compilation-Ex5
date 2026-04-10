@@ -37,7 +37,7 @@ public class graph {
      * Returns a mapping of Temp -> Physical Register.
      */
     public Map<Temp, String> graphColor10() {
-        System.out.println(">> [DEBUG] Starting Register Allocation for " + vertices.size() + " variables.");
+        // System.out.println(">> [DEBUG] Starting Register Allocation for " + vertices.size() + " variables.");
         
         Stack<Temp> selectStack = new Stack<>();
         Map<Temp, Integer> currentDegrees = new HashMap<>();
@@ -62,8 +62,8 @@ public class graph {
 
             if (target == null) {
                 // --- ENHANCED ERROR REPORTING ---
-                System.err.println("\n!!! [CRITICAL] Register Allocation Failed !!!");
-                System.err.println("The following variables have 10 or more interferences and cannot be simplified:");
+                // System.err.println("\n!!! [CRITICAL] Register Allocation Failed !!!");
+                // System.err.println("The following variables have 10 or more interferences and cannot be simplified:");
                 for (Temp t : nodesToProcess) {
                     System.err.format(" - %s (Current Degree: %d)\n", t, currentDegrees.get(t));
                     System.err.print("     Interferes with: ");
@@ -72,12 +72,12 @@ public class graph {
                     }
                     System.err.println();
                 }
-                System.err.println("TIP: Check your AstStmtAssign. Evaluate the Right-Hand Side before the Left-Hand Side.\n");
+                // System.err.println("TIP: Check your AstStmtAssign. Evaluate the Right-Hand Side before the Left-Hand Side.\n");
                 throw new RuntimeException("Register Allocation Failed");
             }
 
             // Log the simplification
-            System.out.println(">> [DEBUG] Simplifying node: " + target + " (Degree: " + currentDegrees.get(target) + ")");
+            // System.out.println(">> [DEBUG] Simplifying node: " + target + " (Degree: " + currentDegrees.get(target) + ")");
             
             nodesToProcess.remove(target);
             removedNodes.add(target);
@@ -94,7 +94,7 @@ public class graph {
         Map<Temp, String> coloring = new HashMap<>();
         String[] physicalRegisters = {"$t0", "$t1", "$t2", "$t3", "$t4", "$t5", "$t6", "$t7", "$t8", "$t9"};
 
-        System.out.println(">> [DEBUG] Phase 1 Complete. Starting Select Phase.");
+        // System.out.println(">> [DEBUG] Phase 1 Complete. Starting Select Phase.");
 
         while (!selectStack.isEmpty()) {
             Temp t = selectStack.pop();
@@ -114,7 +114,7 @@ public class graph {
                 }
             }
             
-            System.out.println(">> [DEBUG] Color assigned: " + t + " -> " + assignedReg);
+            // System.out.println(">> [DEBUG] Color assigned: " + t + " -> " + assignedReg);
             coloring.put(t, assignedReg);
         }
 

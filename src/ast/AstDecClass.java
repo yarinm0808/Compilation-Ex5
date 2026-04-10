@@ -54,19 +54,17 @@ public class AstDecClass extends AstDec
             if (t instanceof TypeClass) {
                 fatherType = (TypeClass) t;
             } else {
-                throw new RuntimeException("ERROR(" + lineNumber + "): superclass " + this.father + " not found.");
+                throw new RuntimeException("ERROR(" + lineNumber + ")");
             }
         }
         
-        // Register the class so it can reference itself
         TypeClass tc = new TypeClass(fatherType, name, null);
         SymbolTable.getInstance().enter(name, tc);
 
-        // 2. Open Class Scope
         SymbolTable.getInstance().setInsideClass(true);
         SymbolTable.getInstance().beginScope();
 
-        // 3. Import Father's members
+        // Import Father's members into current scope
         if (fatherType != null) {
             for (TypeList it = fatherType.data_members; it != null; it = it.tail) {
                 if (it.head instanceof TypeClassVarDec) {
@@ -79,11 +77,16 @@ public class AstDecClass extends AstDec
             }
         }
 
-        TypeList membersList = null;
+        // We use a Head and Tail pointer to APPEND to the list (keeping order)
+        TypeList membersHead = null;
+        TypeList membersTail = null;
 
-        // --- PASS 1: Fields (Tagging for IR) ---
-        // Start after the father's memory footprint
-        int currentHeapOffset = (fatherType != null) ? fatherType.getFieldCount() * 4 : 0;
+        // --- PASS 1: Fields ---
+        // Start at 4 (after VMT) + (Father's fields)
+        int currentHeapOffset = 4; 
+        if (fatherType != null) {
+            currentHeapOffset += (fatherType.getFieldCount() * 4);
+        }
 
         for (AstDecList it = this.dataMembers; it != null; it = it.tail) {
             if (it.head instanceof AstDecVar) {
@@ -91,42 +94,42 @@ public class AstDecClass extends AstDec
                 Type fieldType = varDec.type.semantMe();
                 
                 SymbolTable.getInstance().enter(varDec.name, fieldType);
-                
                 SymbolTableEntry entry = SymbolTable.getInstance().findEntry(varDec.name);
                 entry.isField = true;
-                entry.setOffset(currentHeapOffset);
+                entry.setOffset(currentHeapOffset); // Set the CORRECT absolute offset
                 
-                // --- UPDATED LINE BELOW ---
-                // Pass varDec.initialValue as the third argument
                 TypeClassVarDec vd = new TypeClassVarDec(fieldType, varDec.name, varDec.initialValue);
                 
-                membersList = new TypeList(vd, membersList);
+                // APPEND to list
+                TypeList newNode = new TypeList(vd, null);
+                if (membersHead == null) { membersHead = newNode; membersTail = newNode; }
+                else { membersTail.tail = newNode; membersTail = newNode; }
+                
                 currentHeapOffset += 4;
             }
         }
 
-        // --- PASS 2: Analyze Method Bodies & Mangle Labels ---
+        // --- PASS 2: Methods ---
         for (AstDecList it = this.dataMembers; it != null; it = it.tail) {
             if (it.head instanceof AstDecFunc) {
                 AstDecFunc funcDec = (AstDecFunc) it.head;
-                
-                // Tag the node so AstDecFunc.irMe generates 'Student_getAverage'
                 funcDec.className = this.name; 
-                
                 Type methodType = funcDec.semantMe(); 
                 
-                // NEW: Tag the Type metadata so callers know where to jump
                 if (methodType instanceof TypeFunction) {
                     ((TypeFunction) methodType).definingClassName = this.name;
                 }
                 
-                membersList = new TypeList(methodType, membersList);
+                // APPEND to list
+                TypeList newNode = new TypeList(methodType, null);
+                if (membersHead == null) { membersHead = newNode; membersTail = newNode; }
+                else { membersTail.tail = newNode; membersTail = newNode; }
             }
         }
 
         SymbolTable.getInstance().endScope();
         SymbolTable.getInstance().setInsideClass(false);
-        tc.data_members = membersList;
+        tc.data_members = membersHead; // The list is now in declaration order [ID, age, salaries...]
         return tc;
     }
 

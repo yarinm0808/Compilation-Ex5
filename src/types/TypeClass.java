@@ -1,5 +1,10 @@
 package types;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 public class TypeClass extends Type {
     public String name;
     public TypeClass father;
@@ -54,34 +59,6 @@ public class TypeClass extends Type {
 		return count;
 	}
 
-    public int findFieldOffset(String fieldName) {
-        int offset = 0;
-
-        // 1. If we have a father, his fields come FIRST in memory
-        if (father != null) {
-            int fatherFieldCount = father.getFieldCount();
-            // Check if the field is in the father's memory space
-            Type fatherType = father.findFieldType(fieldName);
-            if (fatherType != null) {
-                return father.findFieldOffset(fieldName);
-            }
-            // If not in father, start our local offsets after the father's fields
-            offset = fatherFieldCount * 4;
-        }
-
-        // 2. Search locally in our own members
-        for (TypeList it = data_members; it != null; it = it.tail) {
-            if (it.head instanceof TypeClassVarDec) {
-                TypeClassVarDec vd = (TypeClassVarDec) it.head;
-                if (vd.name.equals(fieldName)) {
-                    return offset;
-                }
-                offset += 4; // Each field takes 4 bytes
-            }
-        }
-        return -1; // Should not happen if semantMe passed
-    }
-
     /**
      * Checks if 'potentialChild' is a subclass of 'this' (the current class).
      */
@@ -93,5 +70,78 @@ public class TypeClass extends Type {
             curr = curr.father;
         }
         return false;
+    }
+
+    public int findFieldOffset(String fieldName) {
+        // 1. If we have a father, check if the field belongs to him first
+        if (father != null) {
+            Type fatherType = father.findFieldType(fieldName);
+            // Only return if it's a data field, not a method!
+            if (fatherType != null && !(fatherType instanceof TypeFunction)) {
+                return father.findFieldOffset(fieldName);
+            }
+        }
+
+        // 2. If it's not in the father, it's in this class.
+        // The offset starts AFTER all of the father's data fields.
+        int offset = 4; // VMT is at 0
+        if (father != null) {
+            offset += (father.getFieldCount() * 4);
+        }
+
+        // 3. Iterate through local members. 
+        // IMPORTANT: Use a list that matches the DECLARATION order.
+        for (TypeList it = data_members; it != null; it = it.tail) {
+            if (it.head instanceof TypeClassVarDec) {
+                TypeClassVarDec vd = (TypeClassVarDec) it.head;
+                if (vd.name.equals(fieldName)) {
+                    return offset;
+                }
+                offset += 4;
+            }
+        }
+        return -1;
+    }
+
+    // 2. Count unique methods in the hierarchy to determine VMT size
+    public int getMethodCount() {
+        Set<String> methodNames = new HashSet<>();
+        TypeClass curr = this;
+        while (curr != null) {
+            for (TypeList it = curr.data_members; it != null; it = it.tail) {
+                if (it.head instanceof TypeFunction) {
+                    methodNames.add(((TypeFunction) it.head).name);
+                }
+            }
+            curr = curr.father;
+        }
+        return methodNames.size();
+    }
+
+    // 3. Find the fixed index of a method in the VMT
+    // This index MUST be the same for the parent and all children
+    public int findMethodOffset(String methodName) {
+        // We build a list of all unique methods starting from the root (Grandfather)
+        List<String> vmtOrder = getVMTOrder();
+        for (int i = 0; i < vmtOrder.size(); i++) {
+            if (vmtOrder.get(i).equals(methodName)) {
+                return i * 4; // Return byte offset in the VMT
+            }
+        }
+        return -1;
+    }
+
+    public List<String> getVMTOrder() {
+        List<String> order = (father != null) ? father.getVMTOrder() : new ArrayList<>();
+        for (TypeList it = data_members; it != null; it = it.tail) {
+            if (it.head instanceof TypeFunction) {
+                String mName = ((TypeFunction) it.head).name;
+                if (!order.contains(mName)) {
+                    order.add(mName);
+                }
+            }
+        }
+        System.out.println(">> [VMT] Class " + name + " order: " + order);
+        return order;
     }
 }

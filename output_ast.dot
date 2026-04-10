@@ -4,31 +4,442 @@ string_access_violation: .asciiz "Access Violation\n"
 string_illegal_div_by_0: .asciiz "Illegal Division By Zero\n"
 string_invalid_ptr_dref: .asciiz "Invalid Pointer Dereference\n"
 .text
-
 .data
-string_lit_24_str: .asciiz "Citroen"
-string_lit_24: .word string_lit_24_str
+Grandfather_VMT:
+	.word Grandfather_WALK
+	.word Grandfather_RUN
+	.word Grandfather_SWIM
+.text
+.data
+Father_VMT:
+	.word Grandfather_WALK
+	.word Father_RUN
+	.word Father_SWIM
+	.word Father_PAINT
+.text
+.data
+Son_VMT:
+	.word Son_WALK
+	.word Son_RUN
+	.word Father_SWIM
+	.word Father_PAINT
 .text
 
 .data
-string_lit_31_str: .asciiz "said"
-string_lit_31: .word string_lit_31_str
+string_lit_1_str: .asciiz "GrandfatherWALK"
+string_lit_1: .word string_lit_1_str
 .text
 
 .data
-s1_str: .asciiz "Having"
-s1: .word s1_str
+string_lit_8_str: .asciiz "GrandfatherRUN"
+string_lit_8: .word string_lit_8_str
 .text
 
 .data
-s2_str: .asciiz "said"
-s2: .word s2_str
+string_lit_15_str: .asciiz "GrandfatherSWIM"
+string_lit_15: .word string_lit_15_str
 .text
 
 .data
-s3_str: .asciiz "that"
-s3: .word s3_str
+string_lit_26_str: .asciiz "FatherSWIM"
+string_lit_26: .word string_lit_26_str
 .text
+
+.data
+string_lit_33_str: .asciiz "FatherPAINT"
+string_lit_33: .word string_lit_33_str
+.text
+
+.data
+string_lit_40_str: .asciiz "FatherRUN"
+string_lit_40: .word string_lit_40_str
+.text
+
+.data
+string_lit_51_str: .asciiz "SonRUN"
+string_lit_51: .word string_lit_51_str
+.text
+
+.data
+string_lit_58_str: .asciiz "SonWALK"
+string_lit_58: .word string_lit_58_str
+.text
+Grandfather_WALK:
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	move $fp, $sp
+	subu $sp, $sp, 4
+	sw $t0, 0($sp)
+	subu $sp, $sp, 4
+	sw $t1, 0($sp)
+	subu $sp, $sp, 4
+	sw $t2, 0($sp)
+	subu $sp, $sp, 4
+	sw $t3, 0($sp)
+	subu $sp, $sp, 4
+	sw $t4, 0($sp)
+	subu $sp, $sp, 4
+	sw $t5, 0($sp)
+	subu $sp, $sp, 4
+	sw $t6, 0($sp)
+	subu $sp, $sp, 4
+	sw $t7, 0($sp)
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $t9, 0($sp)
+	subu $sp, $sp, 0
+	lw $t0, string_lit_1
+	move $a0, $t0
+	li $v0, 4
+	syscall
+end_Grandfather_WALK:
+	move $sp, $fp
+	lw $t0, -4($sp)
+	lw $t1, -8($sp)
+	lw $t2, -12($sp)
+	lw $t3, -16($sp)
+	lw $t4, -20($sp)
+	lw $t5, -24($sp)
+	lw $t6, -28($sp)
+	lw $t7, -32($sp)
+	lw $t8, -36($sp)
+	lw $t9, -40($sp)
+	lw $fp, 0($sp)
+	lw $ra, 4($sp)
+	addu $sp, $sp, 8
+	jr $ra
+Grandfather_RUN:
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	move $fp, $sp
+	subu $sp, $sp, 4
+	sw $t0, 0($sp)
+	subu $sp, $sp, 4
+	sw $t1, 0($sp)
+	subu $sp, $sp, 4
+	sw $t2, 0($sp)
+	subu $sp, $sp, 4
+	sw $t3, 0($sp)
+	subu $sp, $sp, 4
+	sw $t4, 0($sp)
+	subu $sp, $sp, 4
+	sw $t5, 0($sp)
+	subu $sp, $sp, 4
+	sw $t6, 0($sp)
+	subu $sp, $sp, 4
+	sw $t7, 0($sp)
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $t9, 0($sp)
+	subu $sp, $sp, 0
+	lw $t0, string_lit_8
+	move $a0, $t0
+	li $v0, 4
+	syscall
+end_Grandfather_RUN:
+	move $sp, $fp
+	lw $t0, -4($sp)
+	lw $t1, -8($sp)
+	lw $t2, -12($sp)
+	lw $t3, -16($sp)
+	lw $t4, -20($sp)
+	lw $t5, -24($sp)
+	lw $t6, -28($sp)
+	lw $t7, -32($sp)
+	lw $t8, -36($sp)
+	lw $t9, -40($sp)
+	lw $fp, 0($sp)
+	lw $ra, 4($sp)
+	addu $sp, $sp, 8
+	jr $ra
+Grandfather_SWIM:
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	move $fp, $sp
+	subu $sp, $sp, 4
+	sw $t0, 0($sp)
+	subu $sp, $sp, 4
+	sw $t1, 0($sp)
+	subu $sp, $sp, 4
+	sw $t2, 0($sp)
+	subu $sp, $sp, 4
+	sw $t3, 0($sp)
+	subu $sp, $sp, 4
+	sw $t4, 0($sp)
+	subu $sp, $sp, 4
+	sw $t5, 0($sp)
+	subu $sp, $sp, 4
+	sw $t6, 0($sp)
+	subu $sp, $sp, 4
+	sw $t7, 0($sp)
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $t9, 0($sp)
+	subu $sp, $sp, 0
+	lw $t0, string_lit_15
+	move $a0, $t0
+	li $v0, 4
+	syscall
+end_Grandfather_SWIM:
+	move $sp, $fp
+	lw $t0, -4($sp)
+	lw $t1, -8($sp)
+	lw $t2, -12($sp)
+	lw $t3, -16($sp)
+	lw $t4, -20($sp)
+	lw $t5, -24($sp)
+	lw $t6, -28($sp)
+	lw $t7, -32($sp)
+	lw $t8, -36($sp)
+	lw $t9, -40($sp)
+	lw $fp, 0($sp)
+	lw $ra, 4($sp)
+	addu $sp, $sp, 8
+	jr $ra
+Father_SWIM:
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	move $fp, $sp
+	subu $sp, $sp, 4
+	sw $t0, 0($sp)
+	subu $sp, $sp, 4
+	sw $t1, 0($sp)
+	subu $sp, $sp, 4
+	sw $t2, 0($sp)
+	subu $sp, $sp, 4
+	sw $t3, 0($sp)
+	subu $sp, $sp, 4
+	sw $t4, 0($sp)
+	subu $sp, $sp, 4
+	sw $t5, 0($sp)
+	subu $sp, $sp, 4
+	sw $t6, 0($sp)
+	subu $sp, $sp, 4
+	sw $t7, 0($sp)
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $t9, 0($sp)
+	subu $sp, $sp, 0
+	lw $t0, string_lit_26
+	move $a0, $t0
+	li $v0, 4
+	syscall
+end_Father_SWIM:
+	move $sp, $fp
+	lw $t0, -4($sp)
+	lw $t1, -8($sp)
+	lw $t2, -12($sp)
+	lw $t3, -16($sp)
+	lw $t4, -20($sp)
+	lw $t5, -24($sp)
+	lw $t6, -28($sp)
+	lw $t7, -32($sp)
+	lw $t8, -36($sp)
+	lw $t9, -40($sp)
+	lw $fp, 0($sp)
+	lw $ra, 4($sp)
+	addu $sp, $sp, 8
+	jr $ra
+Father_PAINT:
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	move $fp, $sp
+	subu $sp, $sp, 4
+	sw $t0, 0($sp)
+	subu $sp, $sp, 4
+	sw $t1, 0($sp)
+	subu $sp, $sp, 4
+	sw $t2, 0($sp)
+	subu $sp, $sp, 4
+	sw $t3, 0($sp)
+	subu $sp, $sp, 4
+	sw $t4, 0($sp)
+	subu $sp, $sp, 4
+	sw $t5, 0($sp)
+	subu $sp, $sp, 4
+	sw $t6, 0($sp)
+	subu $sp, $sp, 4
+	sw $t7, 0($sp)
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $t9, 0($sp)
+	subu $sp, $sp, 0
+	lw $t0, string_lit_33
+	move $a0, $t0
+	li $v0, 4
+	syscall
+end_Father_PAINT:
+	move $sp, $fp
+	lw $t0, -4($sp)
+	lw $t1, -8($sp)
+	lw $t2, -12($sp)
+	lw $t3, -16($sp)
+	lw $t4, -20($sp)
+	lw $t5, -24($sp)
+	lw $t6, -28($sp)
+	lw $t7, -32($sp)
+	lw $t8, -36($sp)
+	lw $t9, -40($sp)
+	lw $fp, 0($sp)
+	lw $ra, 4($sp)
+	addu $sp, $sp, 8
+	jr $ra
+Father_RUN:
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	move $fp, $sp
+	subu $sp, $sp, 4
+	sw $t0, 0($sp)
+	subu $sp, $sp, 4
+	sw $t1, 0($sp)
+	subu $sp, $sp, 4
+	sw $t2, 0($sp)
+	subu $sp, $sp, 4
+	sw $t3, 0($sp)
+	subu $sp, $sp, 4
+	sw $t4, 0($sp)
+	subu $sp, $sp, 4
+	sw $t5, 0($sp)
+	subu $sp, $sp, 4
+	sw $t6, 0($sp)
+	subu $sp, $sp, 4
+	sw $t7, 0($sp)
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $t9, 0($sp)
+	subu $sp, $sp, 0
+	lw $t0, string_lit_40
+	move $a0, $t0
+	li $v0, 4
+	syscall
+end_Father_RUN:
+	move $sp, $fp
+	lw $t0, -4($sp)
+	lw $t1, -8($sp)
+	lw $t2, -12($sp)
+	lw $t3, -16($sp)
+	lw $t4, -20($sp)
+	lw $t5, -24($sp)
+	lw $t6, -28($sp)
+	lw $t7, -32($sp)
+	lw $t8, -36($sp)
+	lw $t9, -40($sp)
+	lw $fp, 0($sp)
+	lw $ra, 4($sp)
+	addu $sp, $sp, 8
+	jr $ra
+Son_RUN:
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	move $fp, $sp
+	subu $sp, $sp, 4
+	sw $t0, 0($sp)
+	subu $sp, $sp, 4
+	sw $t1, 0($sp)
+	subu $sp, $sp, 4
+	sw $t2, 0($sp)
+	subu $sp, $sp, 4
+	sw $t3, 0($sp)
+	subu $sp, $sp, 4
+	sw $t4, 0($sp)
+	subu $sp, $sp, 4
+	sw $t5, 0($sp)
+	subu $sp, $sp, 4
+	sw $t6, 0($sp)
+	subu $sp, $sp, 4
+	sw $t7, 0($sp)
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $t9, 0($sp)
+	subu $sp, $sp, 0
+	lw $t0, string_lit_51
+	move $a0, $t0
+	li $v0, 4
+	syscall
+end_Son_RUN:
+	move $sp, $fp
+	lw $t0, -4($sp)
+	lw $t1, -8($sp)
+	lw $t2, -12($sp)
+	lw $t3, -16($sp)
+	lw $t4, -20($sp)
+	lw $t5, -24($sp)
+	lw $t6, -28($sp)
+	lw $t7, -32($sp)
+	lw $t8, -36($sp)
+	lw $t9, -40($sp)
+	lw $fp, 0($sp)
+	lw $ra, 4($sp)
+	addu $sp, $sp, 8
+	jr $ra
+Son_WALK:
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	move $fp, $sp
+	subu $sp, $sp, 4
+	sw $t0, 0($sp)
+	subu $sp, $sp, 4
+	sw $t1, 0($sp)
+	subu $sp, $sp, 4
+	sw $t2, 0($sp)
+	subu $sp, $sp, 4
+	sw $t3, 0($sp)
+	subu $sp, $sp, 4
+	sw $t4, 0($sp)
+	subu $sp, $sp, 4
+	sw $t5, 0($sp)
+	subu $sp, $sp, 4
+	sw $t6, 0($sp)
+	subu $sp, $sp, 4
+	sw $t7, 0($sp)
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $t9, 0($sp)
+	subu $sp, $sp, 0
+	lw $t0, string_lit_58
+	move $a0, $t0
+	li $v0, 4
+	syscall
+end_Son_WALK:
+	move $sp, $fp
+	lw $t0, -4($sp)
+	lw $t1, -8($sp)
+	lw $t2, -12($sp)
+	lw $t3, -16($sp)
+	lw $t4, -20($sp)
+	lw $t5, -24($sp)
+	lw $t6, -28($sp)
+	lw $t7, -32($sp)
+	lw $t8, -36($sp)
+	lw $t9, -40($sp)
+	lw $fp, 0($sp)
+	lw $ra, 4($sp)
+	addu $sp, $sp, 8
+	jr $ra
 
 func_main:
 	subu $sp, $sp, 4
@@ -56,8 +467,10 @@ func_main:
 	sw $t8, 0($sp)
 	subu $sp, $sp, 4
 	sw $t9, 0($sp)
-	subu $sp, $sp, 4
-	li $t0,3
+	subu $sp, $sp, 16
+	li $t0,0
+	sw $t0, -44($fp)
+	li $t0,27
 	move $a0, $t0
 	addi $a0, $a0, 1
 	sll $a0, $a0, 2
@@ -65,280 +478,135 @@ func_main:
 	syscall
 	sw $t0, 0($v0)
 	move $t0, $v0
-	sw $t0, -44($fp)
-	lw $t2, -44($fp)
-	li $t1,0
-	bne $t2, $zero, label_null_ptr_ok_58
+	sw $t0, -48($fp)
+Label_1_start:
+	lw $t1, -44($fp)
+	li $t0,27
+	slt $t0, $t1, $t0
+	beqz $t0, Label_0_end
+	lw $t2, -48($fp)
+	lw $t1, -44($fp)
+	bne $t2, $zero, label_null_ptr_ok_144
 	la $a0, string_invalid_ptr_dref
 	li $v0, 4
 	syscall
 	li $v0, 10
 	syscall
-label_null_ptr_ok_58:
-	lw $t0, s1
+label_null_ptr_ok_144:
+	li $a0, 4
+	li $v0, 9
+	syscall
+	 move $t0, $v0
+		la $at, Father_VMT
+
+	sw $at, 0($t0)
 	addi $at, $t1, 1
 	sll $at, $at, 2
 	addu $at, $at, $t2
 	sw $t0, 0($at)
-	lw $t3, -44($fp)
-	li $t2,1
-	bne $t3, $zero, label_null_ptr_ok_59
-	la $a0, string_invalid_ptr_dref
-	li $v0, 4
-	syscall
-	li $v0, 10
-	syscall
-label_null_ptr_ok_59:
-	lw $t1, string_lit_24
-	lw $t0, s2
-	move $s3, $t1
-	move $s4, $t0
-	li $a0,0
-	move $s0, $s3
-label_len1_60:
-	lb $s1, 0($s0)
-	beqz $s1, label_len2_60
-	addu $a0,$a0,1
-	li $v1, 32767
-	ble $a0, $v1, upper_61
-	move $a0, $v1
-	j done_62
-upper_61:
-	li $v1, -32768
-	bge $a0, $v1, done_62
-	move $a0, $v1
-done_62:
-	addiu $s0, $s0, 1
-	j label_len1_60
-label_len2_60:
-	move $s0, $s4
-label_loop_len2_60:
-	lb $s1, 0($s0)
-	beqz $s1, label_alloc_60
-	addu $a0,$a0,1
-	li $v1, 32767
-	ble $a0, $v1, upper_63
-	move $a0, $v1
-	j done_64
-upper_63:
-	li $v1, -32768
-	bge $a0, $v1, done_64
-	move $a0, $v1
-done_64:
-	addiu $s0, $s0, 1
-	j label_loop_len2_60
-label_alloc_60:
-	addu $a0,$a0,1
-	li $v1, 32767
-	ble $a0, $v1, upper_65
-	move $a0, $v1
-	j done_66
-upper_65:
-	li $v1, -32768
-	bge $a0, $v1, done_66
-	move $a0, $v1
-done_66:
-	li $v0,9
-	syscall
-	move $t0, $v0
-	move $s0, $s3
-	move $s2, $t0
-label_copy1_60:
-	lb $s1, 0($s0)
-	beqz $s1, label_copy2_60
-	sb $s1, 0($s2)
-	addiu $s0, $s0, 1
-	addiu $s2, $s2, 1
-	j label_copy1_60
-label_copy2_60:
-	move $s0, $s4
-label_loop_copy2_60:
-	lb $s1, 0($s0)
-	beqz $s1, label_done_60
-	sb $s1, 0($s2)
-	addiu $s0, $s0, 1
-	addiu $s2, $s2, 1
-	j label_loop_copy2_60
-label_done_60:
-	sb $zero, 0($s2)
-	addi $at, $t2, 1
-	sll $at, $at, 2
-	addu $at, $at, $t3
-	sw $t0, 0($at)
-	lw $t3, -44($fp)
-	li $t2,2
-	bne $t3, $zero, label_null_ptr_ok_67
-	la $a0, string_invalid_ptr_dref
-	li $v0, 4
-	syscall
-	li $v0, 10
-	syscall
-label_null_ptr_ok_67:
-	lw $t1, s1
-	lw $t0, string_lit_31
-	move $s3, $t1
-	move $s4, $t0
-	li $a0,0
-	move $s0, $s3
-label_len1_68:
-	lb $s1, 0($s0)
-	beqz $s1, label_len2_68
-	addu $a0,$a0,1
-	li $v1, 32767
-	ble $a0, $v1, upper_69
-	move $a0, $v1
-	j done_70
-upper_69:
-	li $v1, -32768
-	bge $a0, $v1, done_70
-	move $a0, $v1
-done_70:
-	addiu $s0, $s0, 1
-	j label_len1_68
-label_len2_68:
-	move $s0, $s4
-label_loop_len2_68:
-	lb $s1, 0($s0)
-	beqz $s1, label_alloc_68
-	addu $a0,$a0,1
-	li $v1, 32767
-	ble $a0, $v1, upper_71
-	move $a0, $v1
-	j done_72
-upper_71:
-	li $v1, -32768
-	bge $a0, $v1, done_72
-	move $a0, $v1
-done_72:
-	addiu $s0, $s0, 1
-	j label_loop_len2_68
-label_alloc_68:
-	addu $a0,$a0,1
-	li $v1, 32767
-	ble $a0, $v1, upper_73
-	move $a0, $v1
-	j done_74
-upper_73:
-	li $v1, -32768
-	bge $a0, $v1, done_74
-	move $a0, $v1
-done_74:
-	li $v0,9
-	syscall
-	move $t1, $v0
-	move $s0, $s3
-	move $s2, $t1
-label_copy1_68:
-	lb $s1, 0($s0)
-	beqz $s1, label_copy2_68
-	sb $s1, 0($s2)
-	addiu $s0, $s0, 1
-	addiu $s2, $s2, 1
-	j label_copy1_68
-label_copy2_68:
-	move $s0, $s4
-label_loop_copy2_68:
-	lb $s1, 0($s0)
-	beqz $s1, label_done_68
-	sb $s1, 0($s2)
-	addiu $s0, $s0, 1
-	addiu $s2, $s2, 1
-	j label_loop_copy2_68
-label_done_68:
-	sb $zero, 0($s2)
-	lw $t0, s3
-	move $s3, $t1
-	move $s4, $t0
-	li $a0,0
-	move $s0, $s3
-label_len1_75:
-	lb $s1, 0($s0)
-	beqz $s1, label_len2_75
-	addu $a0,$a0,1
-	li $v1, 32767
-	ble $a0, $v1, upper_76
-	move $a0, $v1
-	j done_77
-upper_76:
-	li $v1, -32768
-	bge $a0, $v1, done_77
-	move $a0, $v1
-done_77:
-	addiu $s0, $s0, 1
-	j label_len1_75
-label_len2_75:
-	move $s0, $s4
-label_loop_len2_75:
-	lb $s1, 0($s0)
-	beqz $s1, label_alloc_75
-	addu $a0,$a0,1
-	li $v1, 32767
-	ble $a0, $v1, upper_78
-	move $a0, $v1
-	j done_79
-upper_78:
-	li $v1, -32768
-	bge $a0, $v1, done_79
-	move $a0, $v1
-done_79:
-	addiu $s0, $s0, 1
-	j label_loop_len2_75
-label_alloc_75:
-	addu $a0,$a0,1
-	li $v1, 32767
-	ble $a0, $v1, upper_80
-	move $a0, $v1
-	j done_81
-upper_80:
-	li $v1, -32768
-	bge $a0, $v1, done_81
-	move $a0, $v1
-done_81:
-	li $v0,9
-	syscall
-	move $t0, $v0
-	move $s0, $s3
-	move $s2, $t0
-label_copy1_75:
-	lb $s1, 0($s0)
-	beqz $s1, label_copy2_75
-	sb $s1, 0($s2)
-	addiu $s0, $s0, 1
-	addiu $s2, $s2, 1
-	j label_copy1_75
-label_copy2_75:
-	move $s0, $s4
-label_loop_copy2_75:
-	lb $s1, 0($s0)
-	beqz $s1, label_done_75
-	sb $s1, 0($s2)
-	addiu $s0, $s0, 1
-	addiu $s2, $s2, 1
-	j label_loop_copy2_75
-label_done_75:
-	sb $zero, 0($s2)
-	addi $at, $t2, 1
-	sll $at, $at, 2
-	addu $at, $at, $t3
-	sw $t0, 0($at)
-	lw $t1, -44($fp)
-	li $t0,2
-	addi $at, $t0, 1
-	sll $at, $at, 2
-	addu $at, $at, $t1
-	lw $t0,0($at)
-	move $a0, $t0
-	li $v0, 4
-	syscall
 	lw $t1, -44($fp)
 	li $t0,1
+	addu $t0,$t1,$t0
+	li $v1, 32767
+	ble $t0, $v1, upper_145
+	move $t0, $v1
+	j done_146
+upper_145:
+	li $v1, -32768
+	bge $t0, $v1, done_146
+	move $t0, $v1
+done_146:
+	sw $t0, -44($fp)
+	j Label_1_start
+Label_0_end:
+	li $t0,0
+	sw $t0, -44($fp)
+Label_3_start:
+	lw $t1, -44($fp)
+	li $t0,11
+	slt $t0, $t1, $t0
+	beqz $t0, Label_2_end
+	lw $t2, -48($fp)
+	lw $t1, -44($fp)
+	bne $t2, $zero, label_null_ptr_ok_147
+	la $a0, string_invalid_ptr_dref
+	li $v0, 4
+	syscall
+	li $v0, 10
+	syscall
+label_null_ptr_ok_147:
+	li $a0, 4
+	li $v0, 9
+	syscall
+	 move $t0, $v0
+		la $at, Son_VMT
+
+	sw $at, 0($t0)
+	addi $at, $t1, 1
+	sll $at, $at, 2
+	addu $at, $at, $t2
+	sw $t0, 0($at)
+	lw $t1, -44($fp)
+	li $t0,1
+	addu $t0,$t1,$t0
+	li $v1, 32767
+	ble $t0, $v1, upper_148
+	move $t0, $v1
+	j done_149
+upper_148:
+	li $v1, -32768
+	bge $t0, $v1, done_149
+	move $t0, $v1
+done_149:
+	sw $t0, -44($fp)
+	j Label_3_start
+Label_2_end:
+	lw $t1, -48($fp)
+	li $t0,3
 	addi $at, $t0, 1
 	sll $at, $at, 2
 	addu $at, $at, $t1
 	lw $t0,0($at)
-	move $a0, $t0
+	sw $t0, -52($fp)
+	lw $t1, -48($fp)
+	li $t0,20
+	addi $at, $t0, 1
+	sll $at, $at, 2
+	addu $at, $at, $t1
+	lw $t0,0($at)
+	sw $t0, -56($fp)
+	lw $t1, -52($fp)
+	bne $t1, $zero, label_null_ptr_ok_150
+	la $a0, string_invalid_ptr_dref
 	li $v0, 4
 	syscall
+	li $v0, 10
+	syscall
+label_null_ptr_ok_150:
+	lw $t0, 0($t1)
+	lw $t0, 0($t0)
+	addiu $sp, $sp, -4
+	sw $t1, 0($sp)
+		jalr $t0
+
+	addiu $sp, $sp, 4
+	move $t0, $v0
+	lw $t1, -56($fp)
+	bne $t1, $zero, label_null_ptr_ok_151
+	la $a0, string_invalid_ptr_dref
+	li $v0, 4
+	syscall
+	li $v0, 10
+	syscall
+label_null_ptr_ok_151:
+	lw $t0, 0($t1)
+	lw $t0, 8($t0)
+	addiu $sp, $sp, -4
+	sw $t1, 0($sp)
+		jalr $t0
+
+	addiu $sp, $sp, 4
+	move $t0, $v0
 end_func_main:
 	move $sp, $fp
 	lw $t0, -4($sp)

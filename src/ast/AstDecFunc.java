@@ -62,70 +62,75 @@ public class AstDecFunc extends AstDec {
 		if (body   != null) AstGraphviz.getInstance().logEdge(serialNumber,body.serialNumber);
 	}
 
-	@Override
-	public Type semantMe() {
-		// [0] Resolve return type
-		Type returnType = (returnTypeNode != null) ? returnTypeNode.semantMe() : TypeVoid.getInstance();
+@Override
+    public Type semantMe() {
+        // [0] Resolve return type
+        Type returnType = (returnTypeNode != null) ? returnTypeNode.semantMe() : TypeVoid.getInstance();
 
-		// [1] Build the parameter type list IN ORDER
-		// We use head/tail to avoid the "reversed parameters" bug
-		TypeList head = null;
-		TypeList tail = null;
+        // [1] Build the parameter type list IN ORDER
+        TypeList head = null;
+        TypeList tail = null;
+        for (AstTypeNameList it = params; it != null; it = it.tail) {
+            Type t = it.head.semantMe();
+            TypeList newNode = new TypeList(t, null);
+            if (head == null) {
+                head = newNode;
+                tail = newNode;
+            } else {
+                tail.tail = newNode;
+                tail = newNode;
+            }
+        }
 
-		for (AstTypeNameList it = params; it != null; it = it.tail) {
-			Type t = it.head.semantMe();
-			TypeList newNode = new TypeList(t, null);
-			
-			if (head == null) {
-				head = newNode;
-				tail = newNode;
-			} else {
-				tail.tail = newNode;
-				tail = newNode;
+        // Create signature 
+        TypeFunction funcSignature = new TypeFunction(returnType, name, head);
+		funcSignature.definingClassName = this.className;
+
+        // --- INHERITANCE / OVERRIDE FIX ---
+        // We only throw an error if the name is already defined as something 
+        // OTHER than a function (like a field) or if it's a global function conflict.
+        Type existingType = SymbolTable.getInstance().findInCurrentScope(name);
+		if (existingType != null) {
+			// Redefinition Rule:
+			// If we find something in the current scope, we only allow it if it is 
+			// a function (an override). If it is a field or variable, it's an error.
+			if (!(existingType instanceof TypeFunction)) {
+				throw new RuntimeException("ERROR(" + lineNumber + "): name " + name + " already defined.");
 			}
 		}
+        
+        // Enter signature into scope (Global or Class scope)
+        SymbolTable.getInstance().enter(name, funcSignature);
 
-		// Create signature and enter into global/class scope
-		TypeFunction funcSignature = new TypeFunction(returnType, name, head);
-		if (SymbolTable.getInstance().findInCurrentScope(name) != null) {
-			throw new RuntimeException("ERROR(" + lineNumber + "): function " + name + " already defined.");
-		}
-		SymbolTable.getInstance().enter(name, funcSignature);
+        // [2] Open Function Scope
+        SymbolTable.getInstance().beginScope();
+        SymbolTable.getInstance().resetLocalVarIndex();
 
-		// [2] Open Function Scope
-		SymbolTable.getInstance().beginScope();
-		SymbolTable.getInstance().resetLocalVarIndex();
+        // [3] Populate parameters and save their Entries
+        // Standalone functions: Param 0 at 8($fp)
+        // Class methods: 'this' at 8($fp), Param 0 at 12($fp)
+        int currentParamOffset = (this.className != null) ? 12 : 8;
 
-		// [3] Populate parameters and save their Entries
-		// Standalone functions: Param 0 at 8($fp) [cite: 87]
-		// Class methods: 'this' at 8($fp), Param 0 at 12($fp)
-		int currentParamOffset = (this.className != null) ? 12 : 8;
+        for (AstTypeNameList it = params; it != null; it = it.tail) {
+            Type t = it.head.semantMe();
+            it.head.entry = SymbolTable.getInstance().enter(it.head.name, t);
+            it.head.entry.isParameter = true;
+            it.head.entry.setOffset(currentParamOffset);
+            currentParamOffset += 4;
+        }
 
-		for (AstTypeNameList it = params; it != null; it = it.tail) {
-			Type t = it.head.semantMe();
-			
-			// Create entry and link it to the node
-			it.head.entry = SymbolTable.getInstance().enter(it.head.name, t);
-			it.head.entry.isParameter = true;
-			
-			// Store the ACTUAL MIPS BYTE OFFSET
-			it.head.entry.setOffset(currentParamOffset);
-			
-			currentParamOffset += 4; // Each parameter is 4 bytes [cite: 87]
-		}
+        // [4] Analyze Body
+        if (body != null) {
+            SymbolTable.getInstance().currentExpectedReturnType = returnType;
+            body.semantMe();
+            SymbolTable.getInstance().currentExpectedReturnType = null;
+        }
 
-		// [4] Analyze Body
-		if (body != null) {
-			SymbolTable.getInstance().currentExpectedReturnType = returnType;
-			body.semantMe();
-			SymbolTable.getInstance().currentExpectedReturnType = null;
-		}
-
-		// [5] Close Scope
-		SymbolTable.getInstance().endScope();
-		
-		return funcSignature;
-	}
+        // [5] Close Scope
+        SymbolTable.getInstance().endScope();
+        
+        return funcSignature;
+    }
 	
 	@Override
 	public Temp irMe() {

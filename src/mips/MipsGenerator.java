@@ -97,19 +97,25 @@ public class MipsGenerator
 		fileWriter.flush();
 	}
 
+	
+
 	public void malloc(String addrReg, int size){
 		fileWriter.format("\tli $a0, %d\n", size);
 		fileWriter.format("\tli $v0, 9\n");
 		fileWriter.format("\tsyscall\n");
 		fileWriter.format("\t move %s, $v0\n", addrReg);
 	}
-	public void store(String srcReg, String varName, int offset) {
-		if (varName == null || "null".equals(varName)) {
-			// Just use the offset directly. 
-			// If the AST sent -44, we print -44.
+	public void store(String srcReg, String baseOrLabel, int offset) {
+		if (baseOrLabel == null || "null".equals(baseOrLabel)) {
+			// Standard local variable access
 			fileWriter.format("\tsw %s, %d($fp)\n", srcReg, offset);
+		} else if (baseOrLabel.startsWith("$")) {
+			// NEW: Register-based access (Heap, VMT, or Stack)
+			// This produces: sw $t0, 0($t1)
+			fileWriter.format("\tsw %s, %d(%s)\n", srcReg, offset, baseOrLabel);
 		} else {
-			fileWriter.format("\tsw %s, %s\n", srcReg, varName);
+			// Global label access (pseudo-instruction)
+			fileWriter.format("\tsw %s, %s\n", srcReg, baseOrLabel);
 		}
 	}
 	public void load(String destReg, String varName, int offset) {
@@ -199,6 +205,15 @@ public class MipsGenerator
 		fileWriter.println("\tlw $fp, 0($sp)");
 		fileWriter.println("\tlw $ra, 4($sp)");
 		fileWriter.println("\taddu $sp, $sp, 8");
+	}
+
+	public void printVMT(String className, List<String> methodLabels) {
+		fileWriter.format(".data\n");
+		fileWriter.format("%s_VMT:\n", className);
+		for (String label : methodLabels) {
+			fileWriter.format("\t.word %s\n", label);
+		}
+		fileWriter.format(".text\n");
 	}
 
 	public void load_byte(String dst, String base, int offset) {

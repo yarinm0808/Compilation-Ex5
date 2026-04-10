@@ -42,15 +42,22 @@ public class AstNewClassInstance extends AstExp {
 
     @Override
     public Temp irMe() {
-        // 1. Calculate size and allocate memory
-        int sizeInBytes = cachedType.getFieldCount() * 4;
+        // 1. Calculate size: 4 bytes (VMT Pointer) + (Fields * 4)
+        // Your TypeClass.getFieldCount() already handles the hierarchy
+        int sizeInBytes = 4 + (cachedType.getFieldCount() * 4);
+        
         Temp addressTemp = TempFactory.getInstance().getFreshTemp();
         
-        // Generates the 'malloc' syscall (or your internal malloc)
+        // 2. Allocate memory on the heap
         Ir.getInstance().AddIrCommand(new IrCommand_Malloc(addressTemp, sizeInBytes));
 
-        // 2. TRIGGER INITIALIZATION
-        // We pass the new object's address and the class type to our helper
+        // 3. THE VMT STAMP (CRITICAL)
+        // We store the address of the class VMT label at offset 0
+        // e.g., "Son_VMT"
+        String vmtLabel = cachedType.name + "_VMT";
+        Ir.getInstance().AddIrCommand(new IrCommandStoreVmt(addressTemp, vmtLabel));
+
+        // 4. Initialize fields (starting from offset 4)
         generateFieldInitializers(addressTemp, cachedType);
 
         return addressTemp;
