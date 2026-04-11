@@ -99,15 +99,23 @@ public class AstStmtAssign extends AstStmt
 		Temp lhsIndexVal = null;
 		int fieldOffset = -1;
 
+		
 		if (var instanceof AstExpVarSubscript) {
 			AstExpVarSubscript sub = (AstExpVarSubscript) var;
-			// Capture the array pointer
+			
+			// 1. Evaluate the array pointer (e.g., moish.lastYearSalaries)
 			lhsBasePtr = sub.var.irMe();
-			// CAPTURE THE INDEX NOW (e.g., moish.age = 10)
+			
+			// 2. Evaluate the index value (e.g., the value 99)
 			lhsIndexVal = sub.subscript.irMe(); 
 			
+			// 3. Null check first
 			Ir.getInstance().AddIrCommand(new IrCommand_Check_Null_Ptr(lhsBasePtr));
-		} 
+
+			// 4. --- THE MISSING TRAP ---
+			// This will generate: lw $at, 0(lhsBasePtr); bge lhsIndexVal, $at, label_error
+			Ir.getInstance().AddIrCommand(new IrCommandBoundsCheck(lhsBasePtr, lhsIndexVal));
+		}
 		else if (var instanceof AstExpVarField) {
 			AstExpVarField fieldVar = (AstExpVarField) var;
 			// Capture the object pointer

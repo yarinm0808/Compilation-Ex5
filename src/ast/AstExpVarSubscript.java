@@ -1,6 +1,7 @@
 package ast;
 
 import ir.Ir;
+import ir.IrCommandBoundsCheck;
 import ir.IrCommandLoadSubscript;
 import temp.Temp;
 import temp.TempFactory;
@@ -60,6 +61,7 @@ public class AstExpVarSubscript extends AstExpVar
 		
 		// 2. Get the index value
 		Temp index = subscript.irMe();
+		Ir.getInstance().AddIrCommand(new IrCommandBoundsCheck(base, index));
 		
 		// 3. Create a result temp
 		Temp res = TempFactory.getInstance().getFreshTemp();
