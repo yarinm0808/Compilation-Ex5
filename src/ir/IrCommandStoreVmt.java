@@ -22,8 +22,8 @@ public class IrCommandStoreVmt extends IrCommand {
         
         // la $at, Son_VMT
         // sw $at, 0($reg)
-        gen.add(String.format("\tla $at, %s\n", vmtLabel));
-        gen.store("$at", reg, 0);
+        gen.add(String.format("\tla $s7, %s\n", vmtLabel));
+        gen.store("$s7", reg, 0);
     }
 
     @Override

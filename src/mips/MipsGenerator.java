@@ -57,7 +57,7 @@ public class MipsGenerator
 		// 1. Push arguments onto the stack
 		if (physicalArgs != null && !physicalArgs.isEmpty()) {
 			int stackSpace = physicalArgs.size() * 4;
-			fileWriter.format("\tsubiu $sp, $sp, %d\n", stackSpace);
+			fileWriter.format("\taddiu $sp, $sp, -%d\n", stackSpace);
 			
 			for (int i = 0; i < physicalArgs.size(); i++) {
 				String regName = physicalArgs.get(i);
@@ -369,10 +369,10 @@ public class MipsGenerator
 		
 		// 2. Load array length (assuming length is at offset 0)
 		// If your length is at offset -4, use -4(%s)
-		fileWriter.format("\tlw $at, 0(%s)\n", arrReg);
+		fileWriter.format("\tlw $s7, 0(%s)\n", arrReg);
 		
 		// 3. Check if index < length
-		fileWriter.format("\tblt %s, $at, %s\n", idxReg, label_ok);
+		fileWriter.format("\tblt %s, $s7, %s\n", idxReg, label_ok);
 		
 		// 4. If we didn't jump to ok, it's an error
 		fileWriter.format("\tj label_runtime_error\n");
@@ -468,16 +468,16 @@ public class MipsGenerator
 		fileWriter.format("\taddu Temp_%d,Temp_%d,Temp_%d\n", d, i1, i2);
 		
 		// Check upper bound: 32767 
-		fileWriter.format("\tli $at, 32767\n");
-		fileWriter.format("\tble Temp_%d, $at, %s\n", d, upperCheck);
-		fileWriter.format("\tmove Temp_%d, $at\n", d);
+		fileWriter.format("\tli $s7, 32767\n");
+		fileWriter.format("\tble Temp_%d, $s7, %s\n", d, upperCheck);
+		fileWriter.format("\tmove Temp_%d, $s7\n", d);
 		fileWriter.format("\tj %s\n", done);
 
 		fileWriter.format("%s:\n", upperCheck);
 		// Check lower bound: -32768 [cite: 16]
-		fileWriter.format("\tli $at, -32768\n");
-		fileWriter.format("\tbge Temp_%d, $at, %s\n", d, done);
-		fileWriter.format("\tmove Temp_%d, $at\n", d);
+		fileWriter.format("\tli $s7, -32768\n");
+		fileWriter.format("\tbge Temp_%d, $s7, %s\n", d, done);
+		fileWriter.format("\tmove Temp_%d, $s7\n", d);
 
 		fileWriter.format("%s:\n", done);
 	}	
@@ -485,9 +485,9 @@ public class MipsGenerator
 		this.fileWriter = pw;
 		fileWriter.print(".globl main\n");
 		fileWriter.print(".data\n");
-		fileWriter.print("string_access_violation: .asciiz \"Access Violation\\n\"\n");
-		fileWriter.print("string_illegal_div_by_0: .asciiz \"Illegal Division By Zero\\n\"\n");
-		fileWriter.print("string_invalid_ptr_dref: .asciiz \"Invalid Pointer Dereference\\n\"\n");
+		fileWriter.print("string_access_violation: .asciiz \"Access Violation\"\n");
+		fileWriter.print("string_illegal_div_by_0: .asciiz \"Illegal Division By Zero\"\n");
+		fileWriter.print("string_invalid_ptr_dref: .asciiz \"Invalid Pointer Dereference\"\n");
 		fileWriter.print(".text\n"); // Start the text segment immediately
 	}
 	
@@ -505,41 +505,14 @@ public class MipsGenerator
 	/* GET SINGLETON INSTANCE ... */
 	/******************************/
 	public static MipsGenerator getInstance()
-	{
-		if (instance == null)
-		{
-			/*******************************/
-			/* [0] The instance itself ... */
-			/*******************************/
-			instance = new MipsGenerator();
-
-			try
-			{
-				/*********************************************************************************/
-				/* [1] Open the MIPS text file and write data section with error message strings */
-				/*********************************************************************************/
-				String dirname="./output/";
-				String filename=String.format("MIPS.txt");
-
-				/***************************************/
-				/* [2] Open MIPS text file for writing */
-				/***************************************/
-				instance.fileWriter = new PrintWriter(dirname+filename);
-			}
-			catch (Exception e)
-			{
-				e.printStackTrace();
-			}
-
-			/*****************************************************/
-			/* [3] Print data section with error message strings */
-			/*****************************************************/
-			instance.fileWriter.print(".data\n");
-			instance.fileWriter.print("string_access_violation: .asciiz \"Access Violation\"\n");
-			instance.fileWriter.print("string_illegal_div_by_0: .asciiz \"Illegal Division By Zero\"\n");
-			instance.fileWriter.print("string_invalid_ptr_dref: .asciiz \"Invalid Pointer Dereference\"\n");
-			instance.fileWriter.println(".text");
-		}
-		return instance;
-	}
+    {
+        if (instance == null)
+        {
+            /*******************************/
+            /* [0] The instance itself ... */
+            /*******************************/
+            instance = new MipsGenerator();
+        }
+        return instance;
+    }
 }

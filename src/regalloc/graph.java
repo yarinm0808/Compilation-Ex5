@@ -64,14 +64,14 @@ public class graph {
                 // --- ENHANCED ERROR REPORTING ---
                 // System.err.println("\n!!! [CRITICAL] Register Allocation Failed !!!");
                 // System.err.println("The following variables have 10 or more interferences and cannot be simplified:");
-                for (Temp t : nodesToProcess) {
-                    System.err.format(" - %s (Current Degree: %d)\n", t, currentDegrees.get(t));
-                    System.err.print("     Interferes with: ");
-                    for (Temp neighbor : edges.get(t)) {
-                        if (!removedNodes.contains(neighbor)) System.err.print(neighbor + " ");
-                    }
-                    System.err.println();
-                }
+                // for (Temp t : nodesToProcess) {
+                //     System.err.format(" - %s (Current Degree: %d)\n", t, currentDegrees.get(t));
+                //     System.err.print("     Interferes with: ");
+                //     for (Temp neighbor : edges.get(t)) {
+                //         if (!removedNodes.contains(neighbor)) System.err.print(neighbor + " ");
+                //     }
+                //     System.err.println();
+                // }
                 // System.err.println("TIP: Check your AstStmtAssign. Evaluate the Right-Hand Side before the Left-Hand Side.\n");
                 throw new RuntimeException("Register Allocation Failed");
             }

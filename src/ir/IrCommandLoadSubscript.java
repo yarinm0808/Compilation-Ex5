@@ -43,11 +43,11 @@ public class IrCommandLoadSubscript extends IrCommand {
         MipsGenerator mips = MipsGenerator.getInstance();
 
         // Use a RAW add/addi that does NOT saturate!
-        mips.add(String.format("addi $at, %s, 1",regIdx));    // $at = index + 1
-        mips.add(String.format("sll $at, $at, 2"));          // $at = (index + 1) * 4
-        mips.add(String.format("addu $at, $at, %s", regBase)); // $at = Base + Offset
+        mips.add(String.format("addi $s7, %s, 1",regIdx));    // $at = index + 1
+        mips.add(String.format("sll $s7, $s7, 2"));          // $at = (index + 1) * 4
+        mips.add(String.format("addu $s7, $s7, %s", regBase)); // $at = Base + Offset
 
         // Load from calculated address
-        mips.add(String.format("lw %s,0($at)", regRes)); 
+        mips.add(String.format("lw %s,0($s7)", regRes)); 
     }
 }

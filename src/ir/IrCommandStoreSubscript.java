@@ -26,14 +26,14 @@ public class IrCommandStoreSubscript extends IrCommand {
         MipsGenerator mips = MipsGenerator.getInstance();
 
         // 1. Calculate the offset: (index + 1) * 4
-        mips.add(String.format("addi $at, %s, 1", regIdx)); 
-        mips.add("sll $at, $at, 2"); 
+        mips.add(String.format("addi $s7, %s, 1", regIdx)); 
+        mips.add("sll $s7, $s7, 2"); 
 
         // 2. Add the offset to the base address
-        mips.add(String.format("addu $at, $at, %s", regBase)); 
+        mips.add(String.format("addu $s7, $s7, %s", regBase)); 
 
         // 3. Store the value into the calculated address
-        mips.add(String.format("sw %s, 0($at)", regVal));
+        mips.add(String.format("sw %s, 0($s7)", regVal));
     }
 
     @Override

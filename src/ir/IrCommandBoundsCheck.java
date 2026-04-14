@@ -36,11 +36,11 @@ public class IrCommandBoundsCheck extends IrCommand{
         String okLabel = "label_bounds_ok_" + AstNodeSerialNumber.getFresh();
 
         // lw $at, 0(arrayBase)
-        gen.add(String.format("\tlw $at, 0(%s)\n", arrayReg));
+        gen.add(String.format("\tlw $s7, 0(%s)\n", arrayReg));
         
         // Bounds checks
         gen.add(String.format("\tbltz %s, %s\n", indexReg, errorLabel));
-        gen.add(String.format("\tbge %s, $at, %s\n", indexReg, errorLabel));
+        gen.add(String.format("\tbge %s, $s7, %s\n", indexReg, errorLabel));
         gen.add(String.format("\tj %s\n", okLabel));
 
         // Error block
