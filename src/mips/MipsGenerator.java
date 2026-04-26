@@ -92,7 +92,7 @@ public class MipsGenerator
 //	}
 	public void allocate(String varName) {
 		fileWriter.println("\n.data");               // Flicker to data
-		fileWriter.format("%s: .word 721\n", varName); // Drop variable
+		fileWriter.format("%s: .word 0\n", varName); // Drop variable
 		fileWriter.println(".text");                 // Flicker back to text
 		fileWriter.flush();
 	}

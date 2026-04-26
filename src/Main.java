@@ -125,7 +125,7 @@ public class Main {
                     } 
                     else if (errorMsg.equals("Register Allocation Failed")) {
                         // Exact match for allocation failure requirement
-                        errorWriter.print("Register Allocation Failed\n");
+                        errorWriter.print("Register Allocation Failed");
                     } 
                     else {
                         // Fallback: If it's an unformatted message, default to a lexical ERROR
@@ -137,6 +137,7 @@ public class Main {
                 }
 
                 errorWriter.close();
+                e.printStackTrace();
                 System.out.println("Compilation halted. Strict error written to: " + outputFileName);
                 
             } catch (FileNotFoundException ex) {
