@@ -10,9 +10,12 @@ import symboltable.SymbolTableEntry;
 
 public class AstExpCall extends AstExp
 {
-    public AstExpVar base; // Added for Part 4 (v.foo)
+    public AstExpVar base; 
     public String funcName;
     public AstExpList params;
+    
+    // --- THE FIX: Store the type here during Semantic Analysis ---
+    protected TypeClass callerType = null; 
 
     // Constructor for Global Calls: foo(1, 2)
     public AstExpCall(String funcName, AstExpList params)
@@ -62,6 +65,9 @@ public class AstExpCall extends AstExp
                 throw new RuntimeException("ERROR(" + lineNumber + "): Cannot call method on non-class type");
             }
             
+            // --- THE FIX: Save the caller type for the IR phase! ---
+            this.callerType = (TypeClass) baseType;
+            
             // Find the method in the class hierarchy (including father classes)
             Type member = ((TypeClass) baseType).findFieldType(funcName);
             if (!(member instanceof TypeFunction)) {
@@ -85,8 +91,6 @@ public class AstExpCall extends AstExp
             Type tActual = itActual.head.semantMe();
             Type tFormal = itFormal.head;
 
-            // --- THE NEW CHECK ---
-            // Ask the formal type: "Is this actual value compatible with you?"
             if (!tFormal.isCompatible(tActual)) {
                 throw new RuntimeException("ERROR(" + lineNumber + "): Parameter type mismatch for " + funcName);
             }
@@ -112,7 +116,6 @@ public class AstExpCall extends AstExp
         }
 
         // 2. Standard Call Logic for Built-ins
-        // Note: These don't return a value in the L language
         if (funcName.equals("PrintInt")) {
             Ir.getInstance().AddIrCommand(new IrCommandPrintInt(argTemps.get(0))); 
             return null; 
@@ -135,16 +138,17 @@ public class AstExpCall extends AstExp
             Ir.getInstance().AddIrCommand(new IrCommand_Check_Null_Ptr(baseAddr));
             
             // C. Use the Type metadata to find the fixed VMT OFFSET
-            // Assuming your AstNode has a method to get its semant-resolved type
-            TypeClass tc = (TypeClass) base.semantMe();
+            // --- THE FIX: Use the safely stored type instead of calling semantMe()! ---
+            TypeClass tc = this.callerType;
+            
             int methodOffset = tc.findMethodOffset(funcName); 
             System.out.println(">> [IR CALL] Method: " + funcName + " | VMT Offset: " + methodOffset);
+            
             // D. Runtime lookup
             Temp vmtPtr = TempFactory.getInstance().getFreshTemp();
             Temp funcAddr = TempFactory.getInstance().getFreshTemp();
 
             // [RUNTIME] vmtPtr = lw 0(baseAddr) -> Load VMT Pointer
-            // We use LoadFromRegister to avoid refactoring your old Load command
             Ir.getInstance().AddIrCommand(new IrCommandLoadFromRegister(vmtPtr, baseAddr, 0));
             
             // [RUNTIME] funcAddr = lw methodOffset(vmtPtr) -> Load Function Address

@@ -17,28 +17,32 @@ public abstract class Type
 	/*************/
 	public boolean isArray(){ return false;}
 
-	// Inside Type.java
 	public boolean isCompatible(Type source) {
-		// 1. "Am I the same object as the source?"
-		if (this == source) return true;
+        // 1. Identity check
+        if (this == source) return true;
+        if (this.name != null && this.name.equals(source.name)) return true;
 
-		// 2. "Am I a Class or Array, and is the source Nil?"
-		if (source instanceof TypeNil) {
-			return (this instanceof TypeClass || this instanceof TypeArray);
-		}
+        // 2. Nil Assignment (The "Boss" fix)
+        // Nil can be assigned to any Class OR any Array.
+        if (source instanceof TypeNil) {
+            return (this instanceof TypeClass || this instanceof TypeArray);
+        }
 
-		// 3. "Am I an Array and is the source an Array with the same element?"
-		if (this instanceof TypeArray && source instanceof TypeArray) {
-			TypeArray targetArray = (TypeArray) this;
-			TypeArray sourceArray = (TypeArray) source;
-			return targetArray.elementType == sourceArray.elementType;
-		}
+        // 3. Array Compatibility
+        if (this instanceof TypeArray && source instanceof TypeArray) {
+            TypeArray targetArray = (TypeArray) this;
+            TypeArray sourceArray = (TypeArray) source;
+            // Use recursion! An array of X is compatible with an array of Y 
+            // ONLY if X is exactly the same as Y (Arrays are usually invariant).
+            return targetArray.elementType.isCompatible(sourceArray.elementType) && 
+                   sourceArray.elementType.isCompatible(targetArray.elementType);
+        }
 
-		// 4. "Am I a Class and is the source my child (Inheritance)?"
-		if (this instanceof TypeClass && source instanceof TypeClass) {
-			return ((TypeClass) this).isMyChild((TypeClass) source);
-		}
+        // 4. Class Inheritance (The "Upcasting" fix)
+        if (this instanceof TypeClass && source instanceof TypeClass) {
+            return ((TypeClass) this).isMyChild((TypeClass) source);
+        }
 
-		return false;
-	}
+        return false;
+    }
 }

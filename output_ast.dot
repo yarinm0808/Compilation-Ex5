@@ -1,1 +1,116 @@
-Register Allocation Failed
+.globl main
+.data
+string_access_violation: .asciiz "Access Violation"
+string_illegal_div_by_0: .asciiz "Illegal Division By Zero"
+string_invalid_ptr_dref: .asciiz "Invalid Pointer Dereference"
+.text
+
+.data
+a: .word 0
+.text
+
+.data
+b: .word 0
+.text
+
+.data
+c: .word 0
+.text
+
+func_main:
+	li $t0,5
+	sw $t0, a
+	lw $t1, a
+	li $t0,10
+	addu $t0,$t1,$t0
+	li $v1, 32767
+	ble $t0, $v1, upper_34
+	move $t0, $v1
+	j done_35
+upper_34:
+	li $v1, -32768
+	bge $t0, $v1, done_35
+	move $t0, $v1
+done_35:
+	sw $t0, b
+	lw $t1, b
+	li $t0,2
+	mul $t0, $t1, $t0
+	li $v1, 32767
+	ble $t0, $v1, label_mul_upper_36
+	move $t0, $v1
+	j label_mul_done_37
+label_mul_upper_36:
+	li $v1, -32768
+	bge $t0, $v1, label_mul_done_37
+	move $t0, $v1
+label_mul_done_37:
+	sw $t0, c
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	move $fp, $sp
+	subu $sp, $sp, 4
+	sw $t0, 0($sp)
+	subu $sp, $sp, 4
+	sw $t1, 0($sp)
+	subu $sp, $sp, 4
+	sw $t2, 0($sp)
+	subu $sp, $sp, 4
+	sw $t3, 0($sp)
+	subu $sp, $sp, 4
+	sw $t4, 0($sp)
+	subu $sp, $sp, 4
+	sw $t5, 0($sp)
+	subu $sp, $sp, 4
+	sw $t6, 0($sp)
+	subu $sp, $sp, 4
+	sw $t7, 0($sp)
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $t9, 0($sp)
+	subu $sp, $sp, 0
+	lw $t0, a
+	move $a0,$t0
+	li $v0,1
+	syscall
+	li $a0,32
+	li $v0,11
+	syscall
+	lw $t0, b
+	move $a0,$t0
+	li $v0,1
+	syscall
+	li $a0,32
+	li $v0,11
+	syscall
+	lw $t0, c
+	move $a0,$t0
+	li $v0,1
+	syscall
+	li $a0,32
+	li $v0,11
+	syscall
+end_func_main:
+	move $sp, $fp
+	lw $t0, -4($sp)
+	lw $t1, -8($sp)
+	lw $t2, -12($sp)
+	lw $t3, -16($sp)
+	lw $t4, -20($sp)
+	lw $t5, -24($sp)
+	lw $t6, -28($sp)
+	lw $t7, -32($sp)
+	lw $t8, -36($sp)
+	lw $t9, -40($sp)
+	lw $fp, 0($sp)
+	lw $ra, 4($sp)
+	addu $sp, $sp, 8
+	jr $ra
+
+main:
+	jal func_main
+	li $v0, 10
+	syscall

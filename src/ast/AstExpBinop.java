@@ -162,12 +162,18 @@ public class AstExpBinop extends AstExp
 			Ir.getInstance().AddIrCommand(new IrCommandBinopGtIntegers(dst, t1, t2));
 		}
 		if (op == 6)
-		{
-			System.out.println("[DEBUG] op:" + op +" bin operation is EQ");
-			Ir.
-					getInstance().
-					AddIrCommand(new IrCommandBinopEqIntegers(dst,t1,t2));
-		}
+        {
+            System.out.println("[DEBUG] op:" + op +" bin operation is EQ");
+            
+            // Check if we are comparing two Strings
+            if (leftType == TypeString.getInstance() && rightType == TypeString.getInstance()) {
+                // Use our new byte-by-byte String comparator
+                Ir.getInstance().AddIrCommand(new IrCommandBinopEqStrings(dst, t1, t2));
+            } else {
+                // Otherwise, it's Integers, Arrays, or Objects (which are all just pointer/value comparisons)
+                Ir.getInstance().AddIrCommand(new IrCommandBinopEqIntegers(dst, t1, t2));
+            }
+        }
 		return dst;
 	}
 

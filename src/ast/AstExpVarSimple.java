@@ -60,6 +60,39 @@ public class AstExpVarSimple extends AstExpVar {
         return this.entry.type;
     }
 
+    /*******************************************/
+    /* IR GENERATION FOR ASSIGNING A VALUE     */
+    /*******************************************/
+    public void irStore(Temp srcValue) {
+        // Safety check
+        if (this.entry == null) {
+            throw new RuntimeException("CRITICAL BUG: entry is null during irStore for variable: " + name);
+        }
+
+        if (this.entry.isField) {
+            // CASE A: Implicit 'this' 
+            Temp tThis = TempFactory.getInstance().getFreshTemp();
+            Ir.getInstance().AddIrCommand(new IrCommandLoad(tThis, null, 8));
+            Ir.getInstance().AddIrCommand(new IrCommandStoreField(tThis, this.entry.offset, srcValue));
+        } 
+        else if (this.entry.scopeLevel == 0) {
+            // CASE B: Global variable
+            Ir.getInstance().AddIrCommand(new IrCommandStore(this.entry.name, srcValue, 0));
+        } 
+        else {
+            // CASE C: Local variable or Parameter
+            int finalOffset;
+            if (this.entry.isParameter) {
+                // Parameters hold their exact byte offset (8, 12, etc.)
+                finalOffset = this.entry.offset;
+            } else {
+                // Local variables calculate offset from -44 downwards
+                finalOffset = -44 - (this.entry.offset * 4);
+            }
+            Ir.getInstance().AddIrCommand(new IrCommandStore(null, srcValue, finalOffset));
+        }
+    }
+
     @Override
     public Temp irMe() {
         Temp t = TempFactory.getInstance().getFreshTemp();

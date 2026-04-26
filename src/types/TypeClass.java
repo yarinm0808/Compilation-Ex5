@@ -58,6 +58,21 @@ public class TypeClass extends Type {
 		}
 		return count;
 	}
+    @Override
+    public boolean isCompatible(Type t) {
+        // 1. Any class variable can hold a 'nil' value
+        if (t instanceof TypeNil) {
+            return true;
+        }
+        
+        // 2. If the right-hand side is also a class, check if it's a subclass!
+        if (t instanceof TypeClass) {
+            return this.isMyChild((TypeClass) t); // Uses your existing inheritance crawler!
+        }
+        
+        // 3. Otherwise, it's a completely different type (like an int or string)
+        return false;
+    }
 
     /**
      * Checks if 'potentialChild' is a subclass of 'this' (the current class).
