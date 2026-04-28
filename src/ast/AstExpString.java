@@ -1,6 +1,7 @@
 package ast;
 
 import ir.Ir;
+import ir.IrCommandAllocateString;
 import ir.IrCommandLoad;
 import mips.MipsGenerator;
 import temp.Temp;
@@ -61,14 +62,13 @@ public class AstExpString extends AstExp
             cleanValue = cleanValue.substring(1, cleanValue.length() - 1);
         }
 
-        // 3. Drop the string into the MIPS .data section
-        MipsGenerator.getInstance().allocateString(label, cleanValue);
+        Ir.getInstance().AddIrCommand(new IrCommandAllocateString(label, cleanValue));
 
         // 4. Create a Temp and issue a definition command
         // This is the "Define" step. Because of this, the allocator 
         // will give 't' a real register like $t0 instead of 'null'.
         Temp t = TempFactory.getInstance().getFreshTemp();
-        Ir.getInstance().AddIrCommand(new IrCommandLoad(t, label, 0));
+        Ir.getInstance().AddIrCommand(new IrCommandLoad(t, label, 0, true));
 
         return t;
     }

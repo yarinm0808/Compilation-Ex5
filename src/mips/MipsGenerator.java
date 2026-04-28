@@ -9,6 +9,7 @@ package mips;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import ast.AstNodeSerialNumber;
 /*******************/
@@ -23,16 +24,19 @@ public class MipsGenerator
 	/* The file writer ... */
 	/***********************/
 	private PrintWriter fileWriter;
+	private Set<String> printedVMTs = new java.util.HashSet<>();
 
 	/***********************/
 	/* The file writer ... */
 	/***********************/
 	public void finalizeFile() {
 		fileWriter.print("\nmain:\n");
+		fileWriter.print("\tjal _global_init\n"); // The new "Global Constructor"
 		fileWriter.print("\tjal func_main\n");
 		fileWriter.print("\tli $v0, 10\n");
 		fileWriter.print("\tsyscall\n");
-		fileWriter.flush(); // Force write to disk
+		
+		fileWriter.flush();
 		fileWriter.close();
 	}
 	public void printInt(String idx)
@@ -208,13 +212,19 @@ public class MipsGenerator
 	}
 
 	public void printVMT(String className, List<String> methodLabels) {
-		fileWriter.format(".data\n");
-		fileWriter.format("%s_VMT:\n", className);
-		for (String label : methodLabels) {
-			fileWriter.format("\t.word %s\n", label);
-		}
-		fileWriter.format(".text\n");
-	}
+        // Prevent duplicate VMTs! If we already printed it, just skip.
+        if (printedVMTs.contains(className)) {
+            return; 
+        }
+        printedVMTs.add(className);
+
+        fileWriter.format(".data\n");
+        fileWriter.format("%s_VMT:\n", className);
+        for (String label : methodLabels) {
+            fileWriter.format("\t.word %s\n", label);
+        }
+        fileWriter.format(".text\n");
+    }
 
 	public void load_byte(String dst, String base, int offset) {
 		// Generates: lb $target, offset($base)
@@ -272,6 +282,10 @@ public class MipsGenerator
 	public void add(String command) {
     	// Simply print the string with a tab for formatting
     	fileWriter.format("\t%s\n", command);
+	}
+	public void addnotab(String command) {
+    	// Simply print the string with a tab for formatting
+    	fileWriter.format("%s\n", command);
 	}
 
 	public void sub(String dst, String oprnd1, String oprnd2) {
@@ -488,7 +502,7 @@ public class MipsGenerator
 		fileWriter.print("string_access_violation: .asciiz \"Access Violation\"\n");
 		fileWriter.print("string_illegal_div_by_0: .asciiz \"Illegal Division By Zero\"\n");
 		fileWriter.print("string_invalid_ptr_dref: .asciiz \"Invalid Pointer Dereference\"\n");
-		fileWriter.print(".text\n"); // Start the text segment immediately
+		// fileWriter.print(".text\n"); // Start the text segment immediately
 	}
 	
 	/**************************************/

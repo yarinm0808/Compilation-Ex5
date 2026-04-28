@@ -9,6 +9,7 @@ import symboltable.SymbolTableEntry;
 public class AstStmtAssign extends AstStmt {
     public AstExpVar var;
     public AstExp exp;
+    public int cachedFieldOffset = -1;
 
     public AstStmtAssign(AstExpVar var, AstExp exp) {
         serialNumber = AstNodeSerialNumber.getFresh();
@@ -31,9 +32,19 @@ public class AstStmtAssign extends AstStmt {
         Type tVar = null;
         Type tExp = null;
 
-        // CRITICAL FIX: Guarantee that semantMe runs on the variable so 'entry' is populated!
         if (var != null) {
             tVar = var.semantMe();
+            
+            // --- NEW CACHING LOGIC ---
+            // Calculate the field offset now, while the Symbol Table is active!
+            if (var instanceof AstExpVarField) {
+                AstExpVarField fieldVar = (AstExpVarField) var;
+                Type baseType = fieldVar.var.semantMe();
+                if (baseType instanceof TypeClass) {
+                    this.cachedFieldOffset = ((TypeClass) baseType).findFieldOffset(fieldVar.fieldName);
+                }
+            }
+            // -------------------------
         }
         if (exp != null) {
             tExp = exp.semantMe();
@@ -67,8 +78,9 @@ public class AstStmtAssign extends AstStmt {
             AstExpVarField fieldVar = (AstExpVarField) var;
             lhsBasePtr = fieldVar.var.irMe();
             Ir.getInstance().AddIrCommand(new IrCommand_Check_Null_Ptr(lhsBasePtr));
-            TypeClass tc = (TypeClass) fieldVar.var.semantMe(); 
-            fieldOffset = tc.findFieldOffset(fieldVar.fieldName);
+            
+            // USE THE CACHED VALUE INSTEAD OF CALLING semantMe()
+            fieldOffset = this.cachedFieldOffset; 
         }
 
         Temp srcValue = exp.irMe();

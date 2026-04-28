@@ -82,31 +82,53 @@ public class AstExpBinop extends AstExp
 	}
 
 	@Override
-	public Type semantMe() {
-		this.leftType = (left != null) ? left.semantMe() : null;
-		this.rightType = (right != null) ? right.semantMe() : null;
+    public Type semantMe() {
+        this.leftType = (left != null) ? left.semantMe() : null;
+        this.rightType = (right != null) ? right.semantMe() : null;
 
-		// 1. Both are Integers
-		if (leftType == TypeInt.getInstance() && rightType == TypeInt.getInstance()) {
-			return TypeInt.getInstance();
-		}
+        // Ensure neither side is completely broken
+        if (this.leftType == null || this.rightType == null) {
+             throw new RuntimeException("ERROR(" + lineNumber + ")");
+        }
 
-		// 2. Both are Strings (Concatenation)
-		if (leftType == TypeString.getInstance() && rightType == TypeString.getInstance() && this.op == 0) {
-			return TypeString.getInstance();
-		}
+        // 1. Equality Operator (op == 6)
+        if (this.op == 6) {
+            // Int == Int
+            if (leftType instanceof TypeInt && rightType instanceof TypeInt) return TypeInt.getInstance();
+            
+            // String == String
+            if (leftType instanceof TypeString && rightType instanceof TypeString) return TypeInt.getInstance();
+            
+            // Nil comparisons (can compare Nil to Class, Array, or another Nil)
+            if (leftType instanceof TypeNil && (rightType instanceof TypeClass || rightType instanceof TypeArray || rightType instanceof TypeNil)) return TypeInt.getInstance();
+            if (rightType instanceof TypeNil && (leftType instanceof TypeClass || leftType instanceof TypeArray || leftType instanceof TypeNil)) return TypeInt.getInstance();
+            
+            // Class/Array comparisons 
+            // 1. Check if they are literally the same object in memory (handles TypeInt, TypeString singletons)
+            if (leftType == rightType) return TypeInt.getInstance();
+            
+            // 2. Check compatibility (handles Inheritance: A = B where B extends A)
+            if (leftType.isCompatible(rightType) || rightType.isCompatible(leftType)) {
+                return TypeInt.getInstance();
+            }
+            
+            // If none of the above match, it's an illegal comparison!
+            throw new RuntimeException("ERROR(" + lineNumber + ")");
+        }
 
-		// 3. Pointer Equality (op == 6)
-		if (op == 6) {
-			if (leftType == rightType) return TypeInt.getInstance();
-			if ((leftType instanceof TypeClass && rightType instanceof TypeNil) ||
-				(leftType instanceof TypeNil && rightType instanceof TypeClass)) {
-				return TypeInt.getInstance();
-			}
-		}
+        // 2. Math Operators (op 1-5, and sometimes 0)
+        if (leftType instanceof TypeInt && rightType instanceof TypeInt) {
+            return TypeInt.getInstance();
+        }
 
-		throw new RuntimeException(">> ERROR: Type mismatch in Binary Operation");
-	}
+        // 3. String Concatenation (op == 0)
+        if (leftType instanceof TypeString && rightType instanceof TypeString && this.op == 0) {
+            return TypeString.getInstance();
+        }
+
+        // 4. Anything that makes it here is a Type Mismatch!
+        throw new RuntimeException("ERROR(" + lineNumber + ")");
+    }
 
 	public Temp irMe()
 	{

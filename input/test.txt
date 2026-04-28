@@ -1,10 +1,8 @@
-int a := 5;
-int b := a + 10;
-int c := b * 2;
+array IntArr = int[];
 
 void main()
 {
-    PrintInt(a);
-    PrintInt(b);
-    PrintInt(c);
+    IntArr arr := nil;
+    PrintString("about");
+    int x := arr[0];
 }

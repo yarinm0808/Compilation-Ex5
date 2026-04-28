@@ -8,7 +8,7 @@ public class AstDecClass extends AstDec
 {
     public String name;
     public String father;
-    public AstDecList dataMembers; // Changed from AstTypeNameList
+    public AstDecList dataMembers; 
 
     // Constructor for class with fields
     public AstDecClass(String name, AstDecList dataMembers)
@@ -19,7 +19,7 @@ public class AstDecClass extends AstDec
         this.father = null;
     }
 
-    // Constructor for inheritance (if you use it)
+    // Constructor for inheritance 
     public AstDecClass(String name, String father, AstDecList dataMembers)
     {
         serialNumber = AstNodeSerialNumber.getFresh();
@@ -31,16 +31,12 @@ public class AstDecClass extends AstDec
     public void printMe()
     {
         System.out.format("CLASS DEC = %s\n", name);
-        
-        // 1. Recursive print
         if (dataMembers != null) dataMembers.printMe();
         
-        // 2. Log this node
         AstGraphviz.getInstance().logNode(
                 serialNumber,
                 String.format("CLASS\n%s", name));
         
-        // 3. Log edge ONLY if dataMembers isn't null
         if (dataMembers != null) {
             AstGraphviz.getInstance().logEdge(serialNumber, dataMembers.serialNumber);
         }
@@ -64,12 +60,39 @@ public class AstDecClass extends AstDec
         SymbolTable.getInstance().setInsideClass(true);
         SymbolTable.getInstance().beginScope();
 
-        // Import Father's members into current scope
-        if (fatherType != null) {
-            for (TypeList it = fatherType.data_members; it != null; it = it.tail) {
+        // ==========================================
+        // THE DEEP INHERITANCE FIX
+        // ==========================================
+        
+        // 1. Build a list of all ancestors (climbing the tree)
+        java.util.List<TypeClass> ancestors = new java.util.ArrayList<>();
+        TypeClass curr = fatherType;
+        while (curr != null) {
+            ancestors.add(curr);
+            // Note: If your TypeClass uses the field name 'father' instead of 'parent', 
+            // change the line below to: curr = curr.father;
+            curr = curr.father; 
+        }
+        
+        // 2. Reverse the list so we process Top-Down (A -> B -> C)
+        // This ensures proper shadowing and offset alignment.
+        java.util.Collections.reverse(ancestors);
+        
+        int currentHeapOffset = 4; // Start right after VMT
+        
+        // 3. Import all fields and methods into the current scope
+        for (TypeClass anc : ancestors) {
+            for (TypeList it = anc.data_members; it != null; it = it.tail) {
                 if (it.head instanceof TypeClassVarDec) {
                     TypeClassVarDec vd = (TypeClassVarDec) it.head;
                     SymbolTable.getInstance().enter(vd.name, vd.t);
+                    
+                    // CRITICAL: Ensure inherited fields get the isField flag AND correct offset
+                    SymbolTableEntry entry = SymbolTable.getInstance().findEntry(vd.name);
+                    entry.isField = true;
+                    entry.setOffset(currentHeapOffset);
+                    
+                    currentHeapOffset += 4; // Accumulate offset for the next field
                 } else if (it.head instanceof TypeFunction) {
                     TypeFunction tf = (TypeFunction) it.head;
                     SymbolTable.getInstance().enter(tf.name, tf);
@@ -77,17 +100,13 @@ public class AstDecClass extends AstDec
             }
         }
 
-        // We use a Head and Tail pointer to APPEND to the list (keeping order)
+        // ==========================================
+
         TypeList membersHead = null;
         TypeList membersTail = null;
 
         // --- PASS 1: Fields ---
-        // Start at 4 (after VMT) + (Father's fields)
-        int currentHeapOffset = 4; 
-        if (fatherType != null) {
-            currentHeapOffset += (fatherType.getFieldCount() * 4);
-        }
-
+        // currentHeapOffset is now perfectly aligned right after the last ancestor field!
         for (AstDecList it = this.dataMembers; it != null; it = it.tail) {
             if (it.head instanceof AstDecVar) {
                 AstDecVar varDec = (AstDecVar) it.head;
@@ -96,7 +115,7 @@ public class AstDecClass extends AstDec
                 SymbolTable.getInstance().enter(varDec.name, fieldType);
                 SymbolTableEntry entry = SymbolTable.getInstance().findEntry(varDec.name);
                 entry.isField = true;
-                entry.setOffset(currentHeapOffset); // Set the CORRECT absolute offset
+                entry.setOffset(currentHeapOffset); 
                 
                 TypeClassVarDec vd = new TypeClassVarDec(fieldType, varDec.name, varDec.initialValue);
                 
@@ -120,7 +139,6 @@ public class AstDecClass extends AstDec
                     ((TypeFunction) methodType).definingClassName = this.name;
                 }
                 
-                // APPEND to list
                 TypeList newNode = new TypeList(methodType, null);
                 if (membersHead == null) { membersHead = newNode; membersTail = newNode; }
                 else { membersTail.tail = newNode; membersTail = newNode; }
@@ -129,18 +147,14 @@ public class AstDecClass extends AstDec
 
         SymbolTable.getInstance().endScope();
         SymbolTable.getInstance().setInsideClass(false);
-        tc.data_members = membersHead; // The list is now in declaration order [ID, age, salaries...]
+        tc.data_members = membersHead; 
         return tc;
     }
 
     @Override
     public Temp irMe() {
-        // We don't allocate the class here (that's the 'new' operator's job)
-        // We just need to traverse into the methods to generate their MIPS bodies.
         for (AstDecList it = this.dataMembers; it != null; it = it.tail) {
             if (it.head instanceof AstDecFunc) {
-                // This call triggers AstDecFunc.irMe(), which writes the 
-                // 'Student_getAverage:' block into your IR/MIPS file.
                 it.head.irMe(); 
             }
         }

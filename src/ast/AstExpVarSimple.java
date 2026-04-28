@@ -72,12 +72,12 @@ public class AstExpVarSimple extends AstExpVar {
         if (this.entry.isField) {
             // CASE A: Implicit 'this' 
             Temp tThis = TempFactory.getInstance().getFreshTemp();
-            Ir.getInstance().AddIrCommand(new IrCommandLoad(tThis, null, 8));
+            Ir.getInstance().AddIrCommand(new IrCommandLoad(tThis, null, 8, false));
             Ir.getInstance().AddIrCommand(new IrCommandStoreField(tThis, this.entry.offset, srcValue));
         } 
         else if (this.entry.scopeLevel == 0) {
             // CASE B: Global variable
-            Ir.getInstance().AddIrCommand(new IrCommandStore(this.entry.name, srcValue, 0));
+            Ir.getInstance().AddIrCommand(new IrCommandStore(this.entry.name, srcValue, 0, true));
         } 
         else {
             // CASE C: Local variable or Parameter
@@ -89,7 +89,7 @@ public class AstExpVarSimple extends AstExpVar {
                 // Local variables calculate offset from -44 downwards
                 finalOffset = -44 - (this.entry.offset * 4);
             }
-            Ir.getInstance().AddIrCommand(new IrCommandStore(null, srcValue, finalOffset));
+            Ir.getInstance().AddIrCommand(new IrCommandStore(null, srcValue, finalOffset, false));
         }
     }
 
@@ -104,7 +104,7 @@ public class AstExpVarSimple extends AstExpVar {
             
             // 1. Load the 'this' pointer from the standard hidden parameter slot [cite: 98]
             // In the TAU architecture, 'this' is the first parameter at 8($fp)
-            Ir.getInstance().AddIrCommand(new IrCommandLoad(tThis, null, 8));
+            Ir.getInstance().AddIrCommand(new IrCommandLoad(tThis, null, 8,false));
             
             // 2. Load the actual field from the heap: lw $t, offset($tThis) [cite: 73]
             Ir.getInstance().AddIrCommand(new IrCommandLoadField(t, tThis, this.entry.offset));
@@ -115,7 +115,7 @@ public class AstExpVarSimple extends AstExpVar {
         // These live in the .data section and are accessed via labels. [cite: 87]
         if (this.entry.scopeLevel == 0) {
             // Generates: lw $t, labelName
-            Ir.getInstance().AddIrCommand(new IrCommandLoad(t, this.entry.name, 0));
+            Ir.getInstance().AddIrCommand(new IrCommandLoad(t, this.entry.name, 0, true));
             return t;
         }
 
@@ -132,7 +132,7 @@ public class AstExpVarSimple extends AstExpVar {
             finalOffset = -44 - (this.entry.offset * 4);
         }
 
-        Ir.getInstance().AddIrCommand(new IrCommandLoad(t, null, finalOffset));
+        Ir.getInstance().AddIrCommand(new IrCommandLoad(t, null, finalOffset, false));
         return t;
     }
 }

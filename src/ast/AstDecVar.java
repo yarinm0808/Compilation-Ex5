@@ -154,10 +154,10 @@ public class AstDecVar extends AstDec {
                 int finalStackOffset = -44 - (this.entry.offset * 4);
                 
                 // Generate a STORE command to the stack slot
-                Ir.getInstance().AddIrCommand(new IrCommandStore(null, val, finalStackOffset));
+                Ir.getInstance().AddIrCommand(new IrCommandStore(null, val, finalStackOffset, false));
             } else {
                 // Global store: use the variable name as the label
-                Ir.getInstance().AddIrCommand(new IrCommandStore(name, val, 0));
+                Ir.getInstance().AddIrCommand(new IrCommandStore(name, val, 0, true));
             }
         }
 

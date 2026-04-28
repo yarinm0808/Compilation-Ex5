@@ -3,6 +3,7 @@ package ast;
 import ir.Ir;
 import ir.IrCommandBoundsCheck;
 import ir.IrCommandLoadSubscript;
+import ir.IrCommand_Check_Null_Ptr;
 import temp.Temp;
 import temp.TempFactory;
 import types.*;
@@ -58,7 +59,7 @@ public class AstExpVarSubscript extends AstExpVar
 	public Temp irMe() {
 		// 1. Get the base address of the array
 		Temp base = var.irMe();
-		
+		Ir.getInstance().AddIrCommand(new IrCommand_Check_Null_Ptr(base));
 		// 2. Get the index value
 		Temp index = subscript.irMe();
 		Ir.getInstance().AddIrCommand(new IrCommandBoundsCheck(base, index));

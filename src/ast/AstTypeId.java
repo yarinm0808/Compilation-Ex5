@@ -14,7 +14,7 @@ public class AstTypeId extends AstType{
     public Type semantMe(){
         Type t = SymbolTable.getInstance().find(this.name);
         if(t == null){
-            throw new RuntimeException(String.format("ERROR"));
+            throw new RuntimeException(String.format("ERROR(\" + this.lineNumber + \")"));
         }
         return t;
     }

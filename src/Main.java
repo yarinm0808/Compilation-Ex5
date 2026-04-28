@@ -121,7 +121,7 @@ public class Main {
                         // The auto-grader ONLY wants "ERROR(15)"
                         // This splits by ':' and takes only the first part.
                         String cleanError = errorMsg.split(":")[0].trim();
-                        errorWriter.print(cleanError + "\n");
+                        errorWriter.print(cleanError);
                     } 
                     else if (errorMsg.equals("Register Allocation Failed")) {
                         // Exact match for allocation failure requirement
@@ -129,11 +129,11 @@ public class Main {
                     } 
                     else {
                         // Fallback: If it's an unformatted message, default to a lexical ERROR
-                        errorWriter.print("ERROR\n");
+                        errorWriter.print("ERROR");
                     }
                 } else {
                     // Fallback for NullPointerExceptions or crashes with no message
-                    errorWriter.print("ERROR\n");
+                    errorWriter.print("ERROR");
                 }
 
                 errorWriter.close();
