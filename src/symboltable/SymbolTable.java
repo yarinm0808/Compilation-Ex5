@@ -33,6 +33,8 @@ public class SymbolTable
     public Type currentExpectedReturnType = null;
     private int localVarCount = 0;
     private boolean insideClass = false; // The new flag
+    public boolean foundReturn = false;
+    
 
     /**************************************************************/
     /* A standard hash function for strings                       */

@@ -62,7 +62,7 @@ public class AstDecFunc extends AstDec {
 		if (body   != null) AstGraphviz.getInstance().logEdge(serialNumber,body.serialNumber);
 	}
 
-@Override
+	@Override
     public Type semantMe() {
         // [0] Resolve return type
         Type returnType = (returnTypeNode != null) ? returnTypeNode.semantMe() : TypeVoid.getInstance();
@@ -119,11 +119,20 @@ public class AstDecFunc extends AstDec {
             currentParamOffset += 4;
         }
 
-        // [4] Analyze Body
+		// [4] Analyze Body
         if (body != null) {
             SymbolTable.getInstance().currentExpectedReturnType = returnType;
+            SymbolTable.getInstance().foundReturn = false; // Reset flag before checking body
+            
             body.semantMe();
+            
             SymbolTable.getInstance().currentExpectedReturnType = null;
+        }
+
+        // --- THE MISSING RETURN CHECK ---
+        // If the function is NOT void, and we didn't find a return statement, crash!
+        if (!(returnType instanceof TypeVoid) && !SymbolTable.getInstance().foundReturn) {
+            throw new RuntimeException("ERROR(" + lineNumber + ")");
         }
 
         // [5] Close Scope

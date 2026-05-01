@@ -5,11 +5,80 @@ string_illegal_div_by_0: .asciiz "Illegal Division By Zero"
 string_invalid_ptr_dref: .asciiz "Invalid Pointer Dereference"
 .data
 .align 2
-global_string_lit_7_str_lit: .asciiz "about"
-.align 2
-global_string_lit_7: .word global_string_lit_7_str_lit
 .text
 _global_init:
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	jr $ra
+
+func_getValue:
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	move $fp, $sp
+	subu $sp, $sp, 4
+	sw $t0, 0($sp)
+	subu $sp, $sp, 4
+	sw $t1, 0($sp)
+	subu $sp, $sp, 4
+	sw $t2, 0($sp)
+	subu $sp, $sp, 4
+	sw $t3, 0($sp)
+	subu $sp, $sp, 4
+	sw $t4, 0($sp)
+	subu $sp, $sp, 4
+	sw $t5, 0($sp)
+	subu $sp, $sp, 4
+	sw $t6, 0($sp)
+	subu $sp, $sp, 4
+	sw $t7, 0($sp)
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $t9, 0($sp)
+	subu $sp, $sp, 4
+	li $t1,1
+	li $t0,0
+	bne $t0,$zero,label_illegal_div_21
+	la $a0, string_illegal_div_by_0
+	li $v0, 4
+	syscall
+	li $v0, 10
+	syscall
+label_illegal_div_21:
+	div $t1, $t0
+	mflo $t0
+	li $s0, 32767
+	ble $t0, $s0, label_div_upper_22
+	move $t0, $s0
+	j label_div_done_23
+label_div_upper_22:
+	li $s0, -32768
+	bge $t0, $s0, label_div_done_23
+	move $t0, $s0
+label_div_done_23:
+	sw $t0, -44($fp)
+	lw $t0, -44($fp)
+	move $v0, $t0
+	j end_func_getValue
+end_func_getValue:
+	move $sp, $fp
+	lw $t0, -4($sp)
+	lw $t1, -8($sp)
+	lw $t2, -12($sp)
+	lw $t3, -16($sp)
+	lw $t4, -20($sp)
+	lw $t5, -24($sp)
+	lw $t6, -28($sp)
+	lw $t7, -32($sp)
+	lw $t8, -36($sp)
+	lw $t9, -40($sp)
+	lw $fp, 0($sp)
+	lw $ra, 4($sp)
+	addu $sp, $sp, 8
 	jr $ra
 
 func_main:
@@ -38,46 +107,10 @@ func_main:
 	sw $t8, 0($sp)
 	subu $sp, $sp, 4
 	sw $t9, 0($sp)
-	subu $sp, $sp, 8
-	li $t0,0
+	subu $sp, $sp, 4
+	jal func_getValue
+	move $t0, $v0
 	sw $t0, -44($fp)
-	lw $t0, global_string_lit_7
-	move $a0, $t0
-	li $v0, 4
-	syscall
-	lw $t1, -44($fp)
-	bne $t1, $zero, label_null_ptr_ok_22
-	la $a0, string_invalid_ptr_dref
-	li $v0, 4
-	syscall
-	li $v0, 10
-	syscall
-label_null_ptr_ok_22:
-	li $t0,0
-		lw $s7, 0($t1)
-
-		bltz $t0, label_access_violation_23
-
-		bge $t0, $s7, label_access_violation_23
-
-		j label_bounds_ok_24
-
-	label_access_violation_23:
-
-		la $a0, string_access_violation
-
-		li $v0, 4
-	syscall
-	li $v0, 10
-	syscall
-
-	label_bounds_ok_24:
-
-	addi $s7, $t0, 1
-	sll $s7, $s7, 2
-	addu $s7, $s7, $t1
-	lw $t0,0($s7)
-	sw $t0, -48($fp)
 end_func_main:
 	move $sp, $fp
 	lw $t0, -4($sp)

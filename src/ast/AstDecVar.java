@@ -45,9 +45,6 @@ public class AstDecVar extends AstDec {
         if (initialValue != null) AstGraphviz.getInstance().logEdge(serialNumber, initialValue.serialNumber);
     }
 
-    /*********************************/
-    /* SEMANTICS for Var Declaration */
-    /*********************************/
     @Override
     public Type semantMe() {
         // 1. Resolve the type node (e.g., 'int' or 'Person')
@@ -73,28 +70,44 @@ public class AstDecVar extends AstDec {
         } 
         else if (insideClass && level == 1) {
             // CLASS FIELD SCOPE
-            // Marked as field so IR knows to use the 'this' pointer + heap offset
             this.entry.isField = true;
             this.entry.isParameter = false;
-            // Note: Specific heap offsets (0, 4, 8) are set by AstDecClass's loop
         } 
         else {
-            // LOCAL SCOPE (Inside a Function, Method, If, or While)
-            // Marked as local so IR knows to use the stack (-44, -48...)
+            // LOCAL SCOPE 
             this.entry.isField = false;
             this.entry.isParameter = false;
-            
-            // Claim a unique index for this function's stack frame
             int uniqueIndex = SymbolTable.getInstance().allocateLocalVarIndex();
             this.entry.setOffset(uniqueIndex);
         }
 
-        // 5. Initial Value Semantics (moish.age := 10)
+        // 5. Initial Value Semantics (The Universal Checker)
         if (initialValue != null) {
             Type initType = initialValue.semantMe();
             
-            // Optional: Check if initType is compatible with t
-            // if (!t.isCompatibleWith(initType)) { ... error ... }
+            boolean isValid = false;
+
+            // 1. Exact match in memory
+            if (t == initType) {
+                isValid = true;
+            }
+            // 2. Exact match by name (e.g., both are "int" or both are "string")
+            else if (t != null && initType != null && t.name != null && t.name.equals(initType.name)) {
+                isValid = true;
+            }
+            // 3. Nil assigned to Class or Array
+            else if (initType instanceof TypeNil && (t instanceof TypeClass || t instanceof TypeArray)) {
+                isValid = true;
+            }
+            // 4. Inheritance / Subtyping
+            else if (t != null && initType != null && (t.isCompatible(initType) || initType.isCompatible(t))) {
+                isValid = true;
+            }
+
+            // If NONE of the valid assignment rules matched, throw the exact error!
+            if (!isValid) {
+                throw new RuntimeException("ERROR(" + lineNumber + ")");
+            }
         }
 
         return t;

@@ -1,63 +1,61 @@
 digraph
 {
 graph [ordering = "out"]
-v4 [label = "NIL"];
+v2 [label = "INT(1)"];
+v3 [label = "INT(0)"];
+v4 [label = "BINOP(/)"];
+v4 -> v2;
+v4 -> v3;
 v5 [label = "VAR
-DEC(arr)"];
-v5 -> v3;
+DEC(j)"];
+v5 -> v1;
 v5 -> v4;
 v6 [label = "STMT
 DEC
 VAR"];
 v6 -> v5;
-v7 [label = "STRING
-about"];
-v8 [label = "EXP
+v7 [label = "VAR
+SIMPLE(j)"];
+v8 [label = "RETURN"];
+v8 -> v7;
+v9 [label = "STMT
 LIST
 "];
-v8 -> v7;
-v9 [label = "CALL(PrintString)
-WITH"];
 v9 -> v8;
 v10 [label = "STMT
-CALL"];
-v10 -> v9;
-v12 [label = "VAR
-SIMPLE(arr)"];
-v13 [label = "INT(0)"];
-v14 [label = "VAR
-DEC(x)"];
-v14 -> v11;
-v14 -> v0;
-v15 [label = "STMT
-DEC
-VAR"];
-v15 -> v14;
-v16 [label = "STMT
 LIST
 "];
+v10 -> v6;
+v10 -> v9;
+v11 [label = "FUNC(getValue)
+:int
+"];
+v11 -> v10;
+v14 [label = "CALL(getValue)
+WITH"];
+v15 [label = "VAR
+DEC(x)"];
+v15 -> v13;
+v15 -> v14;
+v16 [label = "STMT
+DEC
+VAR"];
 v16 -> v15;
 v17 [label = "STMT
 LIST
 "];
-v17 -> v10;
 v17 -> v16;
-v18 [label = "STMT
-LIST
-"];
-v18 -> v6;
-v18 -> v17;
-v19 [label = "FUNC(main)
+v18 [label = "FUNC(main)
 :void
+"];
+v18 -> v17;
+v19 [label = "DEC
+LIST
 "];
 v19 -> v18;
 v20 [label = "DEC
 LIST
 "];
+v20 -> v11;
 v20 -> v19;
-v21 [label = "DEC
-LIST
-"];
-v21 -> v1;
-v21 -> v20;
 }

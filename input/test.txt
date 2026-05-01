@@ -1,8 +1,10 @@
-array IntArr = int[];
+int getValue()
+{
+    int j := 1 / 0;
+    return j;
+}
 
 void main()
 {
-    IntArr arr := nil;
-    PrintString("about");
-    int x := arr[0];
+    int x := getValue();
 }

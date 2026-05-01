@@ -54,58 +54,75 @@ public class Ir {
      */
     public void mipsMe() {
         List<IrCommand> allCommands = flatten();
-        if (allCommands.isEmpty())
-            return;
+        if (allCommands.isEmpty()) return;
 
         List<IrCommand> globalAllocations = new ArrayList<>();
         List<IrCommand> globalInstructions = new ArrayList<>();
-        List<Integer> functionStartIndices = new ArrayList<>();
+        List<List<IrCommand>> allFunctions = new ArrayList<>();
+        List<IrCommand> currentFunction = null;
+        boolean inFunction = false;
 
-        // 1. Find function boundaries
-        for (int j = 0; j < allCommands.size(); j++) {
-            if (allCommands.get(j) instanceof IrCommandPrologue) {
-                if (j > 0 && allCommands.get(j - 1) instanceof IrCommandLabel) {
-                    functionStartIndices.add(j - 1);
-                } else {
-                    functionStartIndices.add(j);
-                }
-            }
-        }
-
-        // 2. Separate Data from Logic
-        int firstFuncIdx = functionStartIndices.isEmpty() ? allCommands.size() : functionStartIndices.get(0);
         Set<String> seenStrings = new java.util.HashSet<>();
-        Set<String> seenVMTs = new java.util.HashSet<>();
+
+        // 1 & 2. Smart Categorization
+        // 1 & 2. Smart Categorization
         for (int j = 0; j < allCommands.size(); j++) {
             IrCommand cmd = allCommands.get(j);
             String name = cmd.getClass().getSimpleName();
 
+            // Handle Strings
             if (name.equals("IrCommandAllocateString")) {
-                // HOIST: Grab strings from EVERYWHERE in the program
                 String lbl = ((IrCommandAllocateString)cmd).name; 
-        
                 if (!seenStrings.contains(lbl)) {
                     seenStrings.add(lbl);
                     globalAllocations.add(cmd);
                 }
+                continue;
             }
-            // else if (name.equals("IrCommandAllocateVMT")) {
-            //     // DEDUPLICATE VMTs!
-            //     // (Change 'className' to whatever variable holds "counter" in your class)
-            //     String vmtName = ((IrCommandAllocateVMT)cmd).className; 
-                
-            //     if (!seenVMTs.contains(vmtName)) {
-            //         seenVMTs.add(vmtName);
-            //         globalAllocations.add(cmd);
-            //     }
-            // } 
-            else if (j < firstFuncIdx) {
-                // GLOBALS: Grab variables/init logic only from BEFORE the first function
-                if (name.equals("IrCommandAllocate")) {
-                    globalAllocations.add(cmd);
-                } else if (!(cmd instanceof IrCommandLabel)) {
-                    globalInstructions.add(cmd);
+
+            // Handle Global Memory Allocation
+            if (name.equals("IrCommandAllocate")) {
+                globalAllocations.add(cmd);
+                continue;
+            }
+
+            // Detect Function START
+            if (name.equals("IrCommandPrologue")) {
+                inFunction = true;
+                currentFunction = new ArrayList<>();
+                // Grab the label if it was right before this prologue
+                if (j > 0 && allCommands.get(j - 1) instanceof IrCommandLabel) {
+                    currentFunction.add(allCommands.get(j - 1));
+                    // Remove it from globalInstructions where it just landed
+                    if (!globalInstructions.isEmpty() && globalInstructions.get(globalInstructions.size() - 1) == allCommands.get(j - 1)) {
+                        globalInstructions.remove(globalInstructions.size() - 1);
+                    }
                 }
+                currentFunction.add(cmd);
+                allFunctions.add(currentFunction);
+                continue;
+            }
+
+            // Route the instruction!
+            if (inFunction) {
+                currentFunction.add(cmd);
+                
+                // CRITICAL FIX: Detect Function END at JumpToRa, not Epilogue!
+                if (name.equals("IrCommandJumpToRa")) {
+                    inFunction = false; // Next commands will be global!
+                }
+            } else {
+                // If it's a label right before a function, ignore it (handled above)
+                if (cmd instanceof IrCommandLabel && j + 1 < allCommands.size() && allCommands.get(j + 1) instanceof IrCommandPrologue) {
+                    continue;
+                }
+                
+                // CRITICAL FIX: Strip any stray jr $ra commands from the global scope!
+                if (name.equals("IrCommandJumpToRa")) {
+                    continue;
+                }
+                
+                globalInstructions.add(cmd);
             }
         }
 
@@ -115,37 +132,37 @@ public class Ir {
         mips.addnotab(".data");
         mips.addnotab(".align 2");
         for (IrCommand cmd : globalAllocations) {
-            // Ensure your Allocate commands use addnotab for the "var: .word 0" line
             cmd.mipsMe(null);
         }
 
         // 4. PHASE B: Global Init Block
         mips.addnotab(".text");
-        mips.addnotab("_global_init:"); // Label flush left
+        mips.addnotab("_global_init:"); 
+        
+        // --- Prologue for _global_init ---
+        mips.add("subu $sp, $sp, 4");
+        mips.add("sw $ra, 0($sp)");
+
         if (!globalInstructions.isEmpty()) {
             regalloc.LivenessAnalyzer laGlobal = new regalloc.LivenessAnalyzer(globalInstructions);
             Map<temp.Temp, String> globalRegMap = laGlobal.buildInterferenceGraph().graphColor10();
             for (IrCommand cmd : globalInstructions) {
-                cmd.mipsMe(globalRegMap); // Instructions here will be indented normally
+                cmd.mipsMe(globalRegMap); 
             }
         }
-        mips.add("jr $ra"); // \tjr $ra
+
+        // --- Epilogue for _global_init ---
+        mips.add("lw $ra, 0($sp)");
+        mips.add("addu $sp, $sp, 4");
+        mips.add("jr $ra");
 
         // 5. PHASE C: Process each Function Bucket
-        for (int k = 0; k < functionStartIndices.size(); k++) {
-            int start = functionStartIndices.get(k);
-            int end = (k + 1 < functionStartIndices.size()) ? functionStartIndices.get(k + 1) : allCommands.size();
-
-            List<IrCommand> funcBody = new ArrayList<>(allCommands.subList(start, end));
-
+        for (List<IrCommand> funcBody : allFunctions) {
             if (!funcBody.isEmpty()) {
                 regalloc.LivenessAnalyzer la = new regalloc.LivenessAnalyzer(funcBody);
                 Map<temp.Temp, String> regMap = la.buildInterferenceGraph().graphColor10();
+                
                 for (IrCommand cmd : funcBody) {
-                    // NEW CHECK: Skip strings here, they are already at the top!
-                    if (cmd.getClass().getSimpleName().equals("IrCommandAllocateString")) {
-                        continue; 
-                    }
                     cmd.mipsMe(regMap);
                 }
             }

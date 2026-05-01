@@ -35,8 +35,7 @@ public class AstStmtAssign extends AstStmt {
         if (var != null) {
             tVar = var.semantMe();
             
-            // --- NEW CACHING LOGIC ---
-            // Calculate the field offset now, while the Symbol Table is active!
+            // --- Caching Logic ---
             if (var instanceof AstExpVarField) {
                 AstExpVarField fieldVar = (AstExpVarField) var;
                 Type baseType = fieldVar.var.semantMe();
@@ -44,8 +43,8 @@ public class AstStmtAssign extends AstStmt {
                     this.cachedFieldOffset = ((TypeClass) baseType).findFieldOffset(fieldVar.fieldName);
                 }
             }
-            // -------------------------
         }
+        
         if (exp != null) {
             tExp = exp.semantMe();
         }
@@ -54,8 +53,21 @@ public class AstStmtAssign extends AstStmt {
             return null; 
         }
 
-        if (!tVar.isCompatible(tExp)) {
-            throw new RuntimeException("ERROR(" + lineNumber + "): Type mismatch in assignment");
+        // --- The Universal Checker ---
+        boolean isValid = false;
+
+        if (tVar == tExp) {
+            isValid = true;
+        } else if (tVar != null && tExp != null && tVar.name != null && tVar.name.equals(tExp.name)) {
+            isValid = true;
+        } else if (tExp instanceof TypeNil && (tVar instanceof TypeClass || tVar instanceof TypeArray)) {
+            isValid = true;
+        } else if (tVar != null && tExp != null && (tVar.isCompatible(tExp) || tExp.isCompatible(tVar))) {
+            isValid = true;
+        }
+
+        if (!isValid) {
+            throw new RuntimeException("ERROR(" + lineNumber + ")");
         }
 
         return null;
